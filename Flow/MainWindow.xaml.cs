@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using FlowCompiler;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Flow
@@ -14,7 +15,10 @@ namespace Flow
 
             var serviceCollection = new ServiceCollection();
             serviceCollection.AddWpfBlazorWebView();
+            serviceCollection.AddSingleton<ICompiler, Compiler>();
             Resources.Add("services", serviceCollection.BuildServiceProvider());
+
+            ToDo.BuildAssembly("");
         }
     }
 }

@@ -1,0 +1,25 @@
+﻿@using FlowCompiler
+
+<input type="text" value="@CodeLine" oninput="@this.LineChanged"/>
+
+@code {
+    [Inject]
+    private ICompiler? Compiler{ get; set; }
+
+    [Parameter] 
+    public string CodeLine { get; set; } = "Test";
+
+    [Parameter] 
+    public EventCallback ValueChanged {get;set;}
+
+    private void LineChanged(ChangeEventArgs e)
+    {
+        var result = Compiler?.CompileLine(e.Value?.ToString() ?? "");
+
+        if (result is not null)
+        {
+            CodeLine = result;
+            ValueChanged.InvokeAsync();
+        }
+    }
+}
