@@ -1,13 +1,16 @@
 ﻿@using FlowCompiler
 
 <input type="text" value="@CodeLine" oninput="@this.LineChanged"/>
+<button onclick="@this.RunProgram">Run</button>
 
 @code {
     [Inject]
     private ICompiler? Compiler{ get; set; }
+    [Inject] 
+    private IDebugger? Debugger{ get; set; }
 
     [Parameter] 
-    public string CodeLine { get; set; } = "Test";
+    public string CodeLine { get; set; } = "Enter code here";
 
     [Parameter] 
     public EventCallback ValueChanged {get;set;}
@@ -21,5 +24,12 @@
             CodeLine = result;
             ValueChanged.InvokeAsync();
         }
+    }
+
+    private void RunProgram()
+    {
+        var exePath = @"C:\Users\Tim\source\repos\2022\Flow\content\test.exe";
+        Compiler?.BuildAssembly(exePath);
+        Debugger?.LaunchApplication(exePath);
     }
 }
