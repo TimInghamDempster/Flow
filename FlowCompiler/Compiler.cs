@@ -6,26 +6,39 @@ namespace FlowCompiler
     {
         string CompileLine(string line);
 
-        void BuildAssembly(string exePath);
+        void BuildAssembly(string exePath, string genereatedCode);
     }
 
     public class Compiler : ICompiler
     {
-        public void BuildAssembly(string exePath)
+        public void BuildAssembly(string exePath, string generatedCode)
         {
-            var il = File.ReadAllText(@"C:\Users\Tim\source\repos\2022\ConsoleApp1\ConsoleApp1\bin\Debug\ConsoleProg.il");
-            var path = @"C:\Users\Tim\source\repos\2022\Flow\content\test.il";
-            File.WriteAllText(path, il);
+            var preamble = File.ReadAllText(@"Content\Preamble.il");
+            var postamble = File.ReadAllText(@"Content\Postamble.il");
 
-            var ilasm = new ProcessStartInfo(@"C:\Users\Tim\source\repos\2022\Flow\content\ilasm.exe", path);
-            ilasm.WorkingDirectory = @"C:\Users\Tim\source\repos\2022\Flow\content";
+            var nl = Environment.NewLine;
+            var code = $"{nl}nop{nl}" +
+                            $"ldstr \"{generatedCode}\"{nl}" +
+                            $"call       void [mscorlib]System.Console::WriteLine(string){nl}" +
+                            $"nop{nl}" +
+                            $"call       string[mscorlib] System.Console::ReadLine(){nl}" +
+                            $"pop{nl}" +
+                            $"ret{nl}";
+
+            var finalIl = $"{preamble}{code}{postamble}";
+
+            var path = Path.Combine(Environment.CurrentDirectory, @"Content\test.il");
+            File.WriteAllText(path, finalIl);
+
+            var ilasm = new ProcessStartInfo(@"Content\ilasm.exe", path);
+            ilasm.WorkingDirectory = Path.Combine(Environment.CurrentDirectory, "Content");
             var ilProc = Process.Start(ilasm);
             ilProc?.WaitForExit();
         }
 
         public string CompileLine(string line)
         {
-            return $" {line}";
+            return line;
         }
     }
 }

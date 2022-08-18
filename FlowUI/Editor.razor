@@ -28,8 +28,8 @@
 
     private void RunProgram()
     {
-        var exePath = @"C:\Users\Tim\source\repos\2022\Flow\content\test.exe";
-        Compiler?.BuildAssembly(exePath);
+        var exePath = @"Content\test.exe";
+        Compiler?.BuildAssembly(exePath, CodeLine);
         Debugger?.LaunchApplication(exePath);
     }
 }

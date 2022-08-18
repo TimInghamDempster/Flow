@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/FlowCompiler/Content/test.il
+/FlowCompiler/Content/test.exe
