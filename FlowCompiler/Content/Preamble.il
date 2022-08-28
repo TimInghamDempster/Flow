@@ -60,3 +60,4 @@
   .method private hidebysig static void  Main(string[] args) cil managed
   {
     .entrypoint
+    nop

@@ -4,6 +4,8 @@
 <button onclick="@this.RunProgram">Run</button>
 
 @code {
+    private ParsedLine? _line;
+
     [Inject]
     private ICompiler? Compiler{ get; set; }
     [Inject] 
@@ -17,19 +19,23 @@
 
     private void LineChanged(ChangeEventArgs e)
     {
-        var result = Compiler?.CompileLine(e.Value?.ToString() ?? "");
+        _line = Compiler?.CompileLine(e.Value?.ToString() ?? "");
 
-        if (result is not null)
+        if (_line is not null)
         {
-            CodeLine = result;
+            CodeLine = _line.StyledLine;
             ValueChanged.InvokeAsync();
         }
     }
 
     private void RunProgram()
     {
+        // Can't actually happen, but injection and nullable
+        // references don't play nicely
+        if (_line is null) return;
+
         var exePath = @"Content\test.exe";
-        Compiler?.BuildAssembly(exePath, CodeLine);
+        Compiler?.BuildAssembly(exePath, _line);
         Debugger?.LaunchApplication(exePath);
     }
 }

@@ -1,4 +1,9 @@
-﻿} // end of method Program::Main
+﻿    call       void [mscorlib]System.Console::WriteLine(int32)
+    nop
+    call       string[mscorlib] System.Console::ReadLine()
+    pop
+    ret
+} // end of method Program::Main
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

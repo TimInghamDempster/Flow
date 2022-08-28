@@ -1,29 +1,33 @@
 ﻿using System.Diagnostics;
+using System.Text;
 
 namespace FlowCompiler
 {
+    public interface IROp { };
+    public record LoadConstInt(int Value) : IROp;
+    public interface IRLine 
+    {
+        IReadOnlyList<IROp> Ops { get; }
+    };
+
+    public record Expression(IReadOnlyList<IROp> Ops) : IRLine;
+    public record ParsedLine(string StyledLine, IRLine IR);
+
     public interface ICompiler
     {
-        string CompileLine(string line);
+        ParsedLine CompileLine(string line);
 
-        void BuildAssembly(string exePath, string genereatedCode);
+        void BuildAssembly(string exePath, ParsedLine genereatedCode);
     }
 
     public class Compiler : ICompiler
     {
-        public void BuildAssembly(string exePath, string generatedCode)
+        public void BuildAssembly(string exePath, ParsedLine generatedCode)
         {
             var preamble = File.ReadAllText(@"Content\Preamble.il");
             var postamble = File.ReadAllText(@"Content\Postamble.il");
 
-            var nl = Environment.NewLine;
-            var code = $"{nl}nop{nl}" +
-                            $"ldstr \"{generatedCode}\"{nl}" +
-                            $"call       void [mscorlib]System.Console::WriteLine(string){nl}" +
-                            $"nop{nl}" +
-                            $"call       string[mscorlib] System.Console::ReadLine(){nl}" +
-                            $"pop{nl}" +
-                            $"ret{nl}";
+            var code = WriteCode(generatedCode.IR);
 
             var finalIl = $"{preamble}{code}{postamble}";
 
@@ -36,9 +40,34 @@ namespace FlowCompiler
             ilProc?.WaitForExit();
         }
 
-        public string CompileLine(string line)
+        public static string WriteCode(IRLine line)
         {
-            return line;
+            var nl = Environment.NewLine;
+
+            var codeStream = new StringBuilder();
+            codeStream.Append(nl);
+
+            foreach(var op in line.Ops)
+            {
+                codeStream.Append(ParseOp(op));
+            }
+
+            return codeStream.ToString();
+        }
+
+        public static string ParseOp(IROp op)
+        {
+            var nl = Environment.NewLine;
+            return op switch
+            {
+                LoadConstInt ld => $"ldc.i4 {ld.Value}{nl}",
+                _ => throw new NotImplementedException()
+            };
+        }
+
+        public ParsedLine CompileLine(string line)
+        {
+            return new(line, new Expression(new List<IROp> { new LoadConstInt(7)}));
         }
     }
 }

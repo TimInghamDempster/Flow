@@ -7,7 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flow", "Flow\Flow.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowUI", "FlowUI\FlowUI.csproj", "{94E15A2B-2506-40CC-8576-F240CF2E3FEA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowCompiler", "FlowCompiler\FlowCompiler.csproj", "{6780CC2A-7753-4DB2-9BA3-BFDA8B3DECA9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowCompiler", "FlowCompiler\FlowCompiler.csproj", "{6780CC2A-7753-4DB2-9BA3-BFDA8B3DECA9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowCompilerTests", "FlowCompilerTests\FlowCompilerTests.csproj", "{EC6EAA06-73C6-42FA-B137-5AD158F2C479}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{6780CC2A-7753-4DB2-9BA3-BFDA8B3DECA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6780CC2A-7753-4DB2-9BA3-BFDA8B3DECA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6780CC2A-7753-4DB2-9BA3-BFDA8B3DECA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC6EAA06-73C6-42FA-B137-5AD158F2C479}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC6EAA06-73C6-42FA-B137-5AD158F2C479}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC6EAA06-73C6-42FA-B137-5AD158F2C479}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC6EAA06-73C6-42FA-B137-5AD158F2C479}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
