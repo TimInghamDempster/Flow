@@ -2,6 +2,8 @@
 
 <input type="text" value="@CodeLine" oninput="@this.LineChanged"/>
 <button onclick="@this.RunProgram">Run</button>
+<br/>
+<div>Result: @EvaluatedResult</div>
 
 @code {
     private ParsedLine? _line;
@@ -13,6 +15,9 @@
 
     [Parameter] 
     public string CodeLine { get; set; } = "Enter code here";
+
+    [Parameter] 
+    public string EvaluatedResult { get; set; } = "Not run yet";
 
     [Parameter] 
     public EventCallback ValueChanged {get;set;}
@@ -36,6 +41,8 @@
 
         var exePath = @"Content\test.exe";
         Compiler?.BuildAssembly(exePath, _line);
-        Debugger?.LaunchApplication(exePath);
+        EvaluatedResult = Debugger?.LaunchApplication(exePath).ToString() ?? "Error";
+
+        ValueChanged.InvokeAsync();
     }
 }

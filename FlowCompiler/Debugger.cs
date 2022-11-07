@@ -1,19 +1,20 @@
-﻿using System.Diagnostics;
+﻿using System.Runtime.InteropServices;
 
 namespace FlowCompiler
 {
     public interface IDebugger
     {
-        void LaunchApplication(string exePath);
+        int LaunchApplication(string exePath);
     }
 
     public class Debugger : IDebugger
     {
-        public void LaunchApplication(string exePath)
+        [DllImport("Runtime", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern int Evaluate();
+
+        public int LaunchApplication(string exePath)
         {
-            var testProg = new ProcessStartInfo(exePath);
-            testProg.UseShellExecute = true;
-            Process.Start(testProg);
+            return Evaluate();
         }
     }
 }
