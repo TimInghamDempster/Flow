@@ -39,9 +39,9 @@
         // references don't play nicely
         if (_line is null) return;
 
-        var exePath = @"Content\test.exe";
-        Compiler?.BuildAssembly(exePath, _line);
-        EvaluatedResult = Debugger?.LaunchApplication(exePath).ToString() ?? "Error";
+        var dllPath = @"Content\test.dll";
+        Compiler?.BuildDll(dllPath, _line);
+        EvaluatedResult = Debugger?.LaunchApplication(dllPath).ToString() ?? "Error";
 
         ValueChanged.InvokeAsync();
     }

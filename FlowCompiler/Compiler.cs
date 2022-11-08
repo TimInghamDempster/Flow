@@ -17,27 +17,36 @@ namespace FlowCompiler
     {
         ParsedLine CompileLine(string line);
 
-        void BuildAssembly(string exePath, ParsedLine genereatedCode);
+        void BuildDll(string exePath, ParsedLine genereatedCode);
     }
 
     public class Compiler : ICompiler
     {
-        public void BuildAssembly(string exePath, ParsedLine generatedCode)
+        public void BuildDll(string dllPath, ParsedLine generatedCode)
         {
-            var preamble = File.ReadAllText(@"Content\Preamble.il");
-            var postamble = File.ReadAllText(@"Content\Postamble.il");
 
-            var code = WriteCode(generatedCode.IR);
+            var code = "extern \"C\" { __declspec(dllexport) int test_func() { return 9;}}";
 
-            var finalIl = $"{preamble}{code}{postamble}";
+            var path = Path.Combine(Environment.CurrentDirectory, @"Content\test.cpp");
+            File.WriteAllText(path, code);
 
-            var path = Path.Combine(Environment.CurrentDirectory, @"Content\test.il");
-            File.WriteAllText(path, finalIl);
+            Process compiler = new Process();
 
-            var ilasm = new ProcessStartInfo(@"Content\ilasm.exe", path);
-            ilasm.WorkingDirectory = Path.Combine(Environment.CurrentDirectory, "Content");
-            var ilProc = Process.Start(ilasm);
-            ilProc?.WaitForExit();
+            compiler.StartInfo.FileName = "cmd.exe";
+            compiler.StartInfo.WorkingDirectory = Path.Combine(Environment.CurrentDirectory, "Content");
+            compiler.StartInfo.RedirectStandardInput = true;
+            compiler.StartInfo.RedirectStandardOutput = true;
+            compiler.StartInfo.RedirectStandardError = true;
+            compiler.StartInfo.UseShellExecute = false;
+
+            compiler.Start();
+            compiler.StandardInput.WriteLine("\"" + @"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" + "\"");
+            compiler.StandardInput.WriteLine("cl.exe /LD test.cpp");
+            compiler.StandardInput.WriteLine(@"exit");
+            string output = compiler.StandardOutput.ReadToEnd();
+            string error = compiler.StandardError.ReadToEnd();
+            compiler.WaitForExit();
+            compiler.Close();
         }
 
         public static string WriteCode(IRLine line)
