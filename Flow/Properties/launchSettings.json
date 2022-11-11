@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Flow": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}
