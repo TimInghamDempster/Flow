@@ -9,7 +9,7 @@ namespace FlowCompiler
         UnclosedBraces = 1,
         UnrecognisedParameter = 2,
         UnclosedTerm = 4,
-        LineOverlenght = 8
+        LineOverlength = 8
     }
 
     public record ParsedLine(string StyledLine, LineState Status);
@@ -23,8 +23,10 @@ namespace FlowCompiler
 
     public class Compiler : ICompiler
     {
+        private const int _maxLineLength = 80;
         public void BuildDll(string dllPath, ParsedLine generatedCode)
         {
+            if (generatedCode.Status is not LineState.Success) return;
 
             var code = $"extern \"C\" {{ __declspec(dllexport) int test_func() {{ return {generatedCode.StyledLine};}} }}";
 
@@ -52,6 +54,9 @@ namespace FlowCompiler
 
         public ParsedLine CompileLine(string line)
         {
+
+            if (line.Length > _maxLineLength) return new(line, LineState.LineOverlength);
+
             return new(line, LineState.Success);
         }
     }
