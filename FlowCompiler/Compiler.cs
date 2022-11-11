@@ -3,7 +3,16 @@ using System.Text;
 
 namespace FlowCompiler
 {
-    public record ParsedLine(string StyledLine);
+    public enum LineState
+    {
+        Success = 0,
+        UnclosedBraces = 1,
+        UnrecognisedParameter = 2,
+        UnclosedTerm = 4,
+        LineOverlenght = 8
+    }
+
+    public record ParsedLine(string StyledLine, LineState Status);
 
     public interface ICompiler
     {
@@ -43,7 +52,7 @@ namespace FlowCompiler
 
         public ParsedLine CompileLine(string line)
         {
-            return new(line);
+            return new(line, LineState.Success);
         }
     }
 }
