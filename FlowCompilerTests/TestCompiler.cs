@@ -76,7 +76,7 @@ namespace FlowCompilerTests
             var compiledLine = compiler.CompileLine(testLine);
 
             compiledLine.StyledLine.Should().Be(testLine);
-            compiledLine.Status.Should().Be(LineState.LineOverlenght);
+            compiledLine.Status.Should().Be(LineState.LineOverlength);
         }
     }
 }
