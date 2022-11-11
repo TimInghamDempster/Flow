@@ -3,15 +3,7 @@ using System.Text;
 
 namespace FlowCompiler
 {
-    public interface IROp { };
-    public record LoadConstInt(int Value) : IROp;
-    public interface IRLine 
-    {
-        IReadOnlyList<IROp> Ops { get; }
-    };
-
-    public record Expression(IReadOnlyList<IROp> Ops) : IRLine;
-    public record ParsedLine(string StyledLine, IRLine IR);
+    public record ParsedLine(string StyledLine);
 
     public interface ICompiler
     {
@@ -25,7 +17,7 @@ namespace FlowCompiler
         public void BuildDll(string dllPath, ParsedLine generatedCode)
         {
 
-            var code = "extern \"C\" { __declspec(dllexport) int test_func() { return 9;}}";
+            var code = $"extern \"C\" {{ __declspec(dllexport) int test_func() {{ return {generatedCode.StyledLine};}} }}";
 
             var path = Path.Combine(Environment.CurrentDirectory, @"Content\test.cpp");
             File.WriteAllText(path, code);
@@ -49,34 +41,9 @@ namespace FlowCompiler
             compiler.Close();
         }
 
-        public static string WriteCode(IRLine line)
-        {
-            var nl = Environment.NewLine;
-
-            var codeStream = new StringBuilder();
-            codeStream.Append(nl);
-
-            foreach(var op in line.Ops)
-            {
-                codeStream.Append(ParseOp(op));
-            }
-
-            return codeStream.ToString();
-        }
-
-        public static string ParseOp(IROp op)
-        {
-            var nl = Environment.NewLine;
-            return op switch
-            {
-                LoadConstInt ld => $"ldc.i4 {ld.Value}{nl}",
-                _ => throw new NotImplementedException()
-            };
-        }
-
         public ParsedLine CompileLine(string line)
         {
-            return new(line, new Expression(new List<IROp> { new LoadConstInt(7)}));
+            return new(line);
         }
     }
 }
