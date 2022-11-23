@@ -26,9 +26,9 @@
     {
         _line = Compiler?.CompileLine(e.Value?.ToString() ?? "");
 
-        if (_line is not null)
+        if (_line is GoodLine goodLine)
         {
-            CodeLine = _line.StyledLine;
+            CodeLine = goodLine.ToString();
             ValueChanged.InvokeAsync();
         }
     }

@@ -10,24 +10,24 @@ namespace FlowCompilerTests
         public void AcceptsIntExpression()
         {
             var compiler = new Compiler();
-            var testLine = "1 + 2 * (3 + 5) / 4 - -2";
+            var testLine = "1 + 2 * ( 3 + 5 ) / 4 - - 2";
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.StyledLine.Should().Be(testLine);
-            compiledLine.Status.Should().Be(LineState.Success);
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
         }
 
         [TestMethod]
         public void AcceptsFloatExpression()
         {
             var compiler = new Compiler();
-            var testLine = "1.0 + 2.5f * (3.4 + 5) / 4.2 - -2f";
+            var testLine = "1.0 + 2.5f * ( 3.4 + 5 ) / 4.2 - - 2f";
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.StyledLine.Should().Be(testLine);
-            compiledLine.Status.Should().Be(LineState.Success);
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
         }
 
         [TestMethod]
@@ -38,34 +38,45 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.StyledLine.Should().Be(testLine);
-            compiledLine.Status.Should().Be(LineState.UnclosedTerm);
+            compiledLine.Tokens.OfType<ErrorToken>().
+                Should().Contain(e => e.Error.Contains("Value expected"));
         }
 
         [TestMethod]
-        public void RejectsUnbalancedBraces()
+        public void RejectsUnbalancedPerens()
         {
             var compiler = new Compiler();
             var testLine = "1 + 2 * (3 + 5 / 4 - 2";
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.StyledLine.Should().Be(testLine);
-            compiledLine.Status.Should().Be(LineState.UnclosedBraces);
+            compiledLine.Tokens.OfType<ErrorToken>().
+                Should().Contain(e => e.Error.Contains("Unclosed bracket"));
         }
 
         [TestMethod]
         public void RejectsInvalidTerms()
         {
             var compiler = new Compiler();
-            var testLine = "1 + five * (3 + 5 / 4, - 2";
+            var testLine = "1 + five * (3 + 5 / 4) - 2";
             
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.StyledLine.Should().Be(testLine);
-            compiledLine.Status.Should().Be(LineState.UnrecognisedParameter);
+            compiledLine.Tokens.OfType<ErrorToken>().
+                Should().Contain(e => e.Error.Contains("Unrecognised character"));
         }
 
+        [TestMethod]
+        public void RejectsIncompleteSubExpression()
+        {
+            var compiler = new Compiler();
+            var testLine = "1 + 5 * (3 + 5 / ) - 2";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Tokens.OfType<ErrorToken>().
+                Should().Contain(e => e.Error.Contains("Value expected"));
+        }
 
         [TestMethod]
         public void RejectsOverlengthLine()
@@ -75,8 +86,8 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.StyledLine.Should().Be(testLine);
-            compiledLine.Status.Should().Be(LineState.LineOverlength);
+            compiledLine.Tokens.OfType<ErrorToken>().
+                Should().Contain(e => e.Error.Contains("Line too long"));
         }
     }
 }
