@@ -38,9 +38,9 @@ namespace FlowCompiler
         {
             if (generatedCode is not GoodLine line) return;
 
-            var code = $"extern \"C\" {{ __declspec(dllexport) int test_func() {{ return {line};}} }}";
+            var code = $" __declspec(dllexport) int test_func() {{ return {line};}}";
 
-            var path = Path.Combine(Environment.CurrentDirectory, @"Content\test.cpp");
+            var path = Path.Combine(Environment.CurrentDirectory, @"Content\test.c");
             File.WriteAllText(path, code);
 
             Process compiler = new Process();
@@ -54,7 +54,7 @@ namespace FlowCompiler
 
             compiler.Start();
             compiler.StandardInput.WriteLine("\"" + @"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" + "\"");
-            compiler.StandardInput.WriteLine("cl.exe /LD test.cpp");
+            compiler.StandardInput.WriteLine("cl.exe /LD test.c");
             compiler.StandardInput.WriteLine(@"exit");
             string output = compiler.StandardOutput.ReadToEnd();
             string error = compiler.StandardError.ReadToEnd();
