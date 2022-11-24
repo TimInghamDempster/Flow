@@ -75,8 +75,11 @@ namespace FlowCompiler
             }
 
             tokens.RemoveAll(t => t is Space);
-            
-            if (tokens.LastOrDefault() is not NumberToken) tokens.Add(new ErrorToken(line.Length, line.Length, "", "Value expected"));
+
+            if (tokens.LastOrDefault() is not (NumberToken or ClosePeren))
+            {
+                tokens.Add(new ErrorToken(line.Length, line.Length, "", "Value expected"));
+            }
 
             if (line.Length > _maxLineLength) tokens.Add(new ErrorToken(line.Length, line.Length, "", "Line too long"));
 
@@ -121,10 +124,7 @@ namespace FlowCompiler
             };
         }
 
-        private Token GetToken(string line, int index)
-        {
-            var c = line[index];
-            return c switch
+        private Token GetToken(string line, int index) => line[index] switch
             {
                 '(' => new OpenPeren(index, index),
                 ')' => new ClosePeren(index, index),
@@ -134,9 +134,8 @@ namespace FlowCompiler
                 '/' => new Operator(index, index, "/"),
                 '*' => new Operator(index, index, "*"),
                 >= '0' and <= '9' => Number(line, index),
-                _ => new ErrorToken(index, index, c.ToString(), "Unrecognised character")
+                _ => new ErrorToken(index, index, line[index].ToString(), "Unrecognised character")
             };
-        }
 
         enum NumberType
         {
@@ -180,7 +179,7 @@ namespace FlowCompiler
             // The exception is if we exit on the first or last char
             // tested
             if(workingIndex > index &&
-                workingIndex < line.Length - 1)
+                workingIndex < line.Length)
             {
                 workingIndex--;
             }

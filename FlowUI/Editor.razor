@@ -1,9 +1,11 @@
 ﻿@using FlowCompiler
 
-<input type="text" value="@CodeLine" oninput="@this.LineChanged"/>
+<input type="text" value="@CodeLine" placeholder="Enter code here" oninput="@this.LineChanged"/>
 <button onclick="@this.RunProgram">Run</button>
 <br/>
 <div>Result: @EvaluatedResult</div>
+<br/>
+<div>@Error</div>
 
 @code {
     private ParsedLine? _line;
@@ -14,10 +16,12 @@
     private IDebugger? Debugger{ get; set; }
 
     [Parameter] 
-    public string CodeLine { get; set; } = "Enter code here";
+    public string CodeLine { get; set; } = "";
 
     [Parameter] 
     public string EvaluatedResult { get; set; } = "Not run yet";
+
+    public string Error => string.Join("\n", _line?.Tokens.OfType<ErrorToken>().Select(e => e.Error) ?? Enumerable.Empty<string>());
 
     [Parameter] 
     public EventCallback ValueChanged {get;set;}

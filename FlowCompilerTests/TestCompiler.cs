@@ -19,6 +19,18 @@ namespace FlowCompilerTests
         }
 
         [TestMethod]
+        public void AcceptsWithBraceAtEnd()
+        { 
+            var compiler = new Compiler();
+            var testLine = "1 + 2 * ( 3 + 5 )";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
+        }
+
+        [TestMethod]
         public void AcceptsFloatExpression()
         {
             var compiler = new Compiler();
