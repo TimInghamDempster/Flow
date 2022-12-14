@@ -17,12 +17,15 @@ namespace FlowCompiler
     public record OpenPeren(int StartIndex, int EndIndex) : Token(StartIndex, EndIndex, "(");
     public record ClosePeren(int StartIndex, int EndIndex) : Token(StartIndex, EndIndex, ")");
     public record Space(int StartIndex, int EndIndex) : Token(StartIndex, EndIndex, " ");
+    public record Assignment(int StartIndex, int EndIndex) : Token(StartIndex, EndIndex, "=");
     public record NumberToken(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
     public record IntNum(int StartIndex, int EndIndex, string Value) : NumberToken(StartIndex, EndIndex, Value);
     public record DoubleNum(int StartIndex, int EndIndex, string Value) : NumberToken(StartIndex, EndIndex, Value);
     public record FloatNum(int StartIndex, int EndIndex, string Value) : NumberToken(StartIndex, EndIndex, Value);
     public record Operator(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
     public record ErrorToken(int StartIndex, int EndIndex, string Value, string Error) : Token(StartIndex, EndIndex, Value);
+    public record Name(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
+    public record Keyword(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
 
     public interface ICompiler
     {
@@ -64,12 +67,29 @@ namespace FlowCompiler
 
         public ParsedLine CompileLine(string line)
         {
-            int index = 0;
+            return line switch
+            {
+                var s when s.StartsWith("val") => CompileExpression(s),
+                var s when s.StartsWith("step") => CompileStep(s),
+                _ => new ErrorLine(new List<Token> { new ErrorToken(0,0,line, """Line must start with "val" or "step".""") })
+            };
+        }
+
+        private ParsedLine CompileStep(string s)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ParsedLine CompileExpression(string expression)
+        { 
+            int index = 3;
             List<Token> tokens = new();
 
-            while(index < line.Length )
+            tokens.Add(new Keyword(0, 3, "val"));
+
+            while(index < expression.Length )
             {
-                var nextToken = GetToken(line, index);
+                var nextToken = GetToken(expression, index);
                 tokens.Add(nextToken);
                 index = nextToken.EndIndex + 1;
             }
@@ -78,27 +98,30 @@ namespace FlowCompiler
 
             if (tokens.LastOrDefault() is not (NumberToken or ClosePeren))
             {
-                tokens.Add(new ErrorToken(line.Length, line.Length, "", "Value expected"));
+                tokens.Add(new ErrorToken(expression.Length, expression.Length, "", "Value expected"));
             }
 
-            if (line.Length > _maxLineLength) tokens.Add(new ErrorToken(line.Length, line.Length, "", "Line too long"));
+            if (expression.Length > _maxLineLength) tokens.Add(new ErrorToken(expression.Length, expression.Length, "", "Line too long"));
 
             if (tokens.OfType<OpenPeren>().Count() != tokens.OfType<ClosePeren>().Count())
             {
-                tokens.Add(new ErrorToken(line.Length, line.Length, "", "Unclosed bracket"));
+                tokens.Add(new ErrorToken(expression.Length, expression.Length, "", "Unclosed bracket"));
             }
 
-            CheckSyntax(tokens);
+            if (tokens.ElementAt(1) is not Name) tokens.Insert(1, new ErrorToken(1, 1, "", "val must have a name."));
+            if (tokens.ElementAt(2) is not Assignment) tokens.Insert(1, new ErrorToken(1, 1, "", "expression must have an assignment."));
+
+            CheckSyntax(tokens, 3);
 
             return tokens.OfType<ErrorToken>().Any() ?
                 new ErrorLine(tokens) :
                 new GoodLine(tokens);
         }
 
-        private void CheckSyntax(List<Token> tokens)
+        private void CheckSyntax(List<Token> tokens, int skipCount)
         {
-            var previousToken = tokens[0];
-            for(int i = 1; i < tokens.Count; i++)
+            var previousToken = tokens[skipCount];
+            for(int i = skipCount + 1; i < tokens.Count; i++)
             {
                 var token = tokens[i];
 
@@ -107,9 +130,7 @@ namespace FlowCompiler
             }
         }
 
-        private Token ValidateNextToken(Token previousToken, Token token)
-        {
-            return (previousToken, token) switch
+        private Token ValidateNextToken(Token previousToken, Token token) => (previousToken, token) switch
             {
                 (NumberToken, Operator) => token,
                 (Operator, NumberToken) => token,
@@ -122,7 +143,6 @@ namespace FlowCompiler
                 (Operator, _) => new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "Value expected"),
                 _ => new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "Unknown syntax error")
             };
-        }
 
         private Token GetToken(string line, int index) => line[index] switch
             {
@@ -133,9 +153,43 @@ namespace FlowCompiler
                 '-' => new Operator(index, index, "-"),
                 '/' => new Operator(index, index, "/"),
                 '*' => new Operator(index, index, "*"),
+                '=' => new Assignment(index, index),
                 >= '0' and <= '9' => Number(line, index),
-                _ => new ErrorToken(index, index, line[index].ToString(), "Unrecognised character")
+                _ => GetName(line, index)
             };
+
+        private Name GetName(string line, int index)
+        {
+            var characters = new List<char>();
+
+            var workingIndex = index;
+            while (workingIndex < line.Length)
+            {
+                var c = line[workingIndex];
+
+                if(c == ' ') break;
+
+                characters.Add(c);
+
+                workingIndex++;
+            }
+
+            // This is a bit complicated, during the loop we
+            // increment to the next index to TEST, but we want
+            // the index of the last char to PASS which is one
+            // less becuase the last char to test is always a fail
+            // The exception is if we exit on the first or last char
+            // tested
+            if (workingIndex > index &&
+                workingIndex < line.Length)
+            {
+                workingIndex--;
+            }
+
+            var value = string.Concat(characters);
+
+            return new(index, workingIndex, value);
+        }
 
         enum NumberType
         {
