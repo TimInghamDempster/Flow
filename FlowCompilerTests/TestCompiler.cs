@@ -12,10 +12,61 @@ namespace FlowCompilerTests
 
         [TestCategory(_expression)]
         [TestMethod]
+        public void RejectsLiterals()
+        {
+            var compiler = new Compiler();
+            var testLine = "val value = one + two * ( three + 5 ) / 4 - - two";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Should().BeOfType<ErrorLine>();
+            compiledLine.Tokens.OfType<ErrorToken>().Should().Contain(e => e.Error.Contains("literal"));
+        }
+
+        [TestCategory(_expression)]
+        [TestMethod]
+        public void AcceptsConstInt()
+        {
+            var compiler = new Compiler();
+            var testLine = "val value = 15";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
+        }
+
+        [TestCategory(_expression)]
+        [TestMethod]
+        public void AcceptsConstDouble()
+        {
+            var compiler = new Compiler();
+            var testLine = "val value = 15.0";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
+        }
+
+        [TestCategory(_expression)]
+        [TestMethod]
+        public void AcceptsConstFloat()
+        {
+            var compiler = new Compiler();
+            var testLine = "val value = 1.5f";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
+        }
+        [TestCategory(_expression)]
+        [TestMethod]
         public void AcceptsIntExpression()
         {
             var compiler = new Compiler();
-            var testLine = "val value = 1 + 2 * ( 3 + 5 ) / 4 - - 2";
+            var testLine = "val value = one + two * ( three + five ) / four - - two";
 
             var compiledLine = compiler.CompileLine(testLine);
 
@@ -28,20 +79,7 @@ namespace FlowCompilerTests
         public void AcceptsWithBraceAtEnd()
         {
             var compiler = new Compiler();
-            var testLine = "val value = 1 + 2 * ( 3 + 5 )";
-
-            var compiledLine = compiler.CompileLine(testLine);
-
-            compiledLine.Should().BeOfType<GoodLine>();
-            compiledLine.ToString().Should().Be(testLine);
-        }
-
-        [TestCategory(_expression)]
-        [TestMethod]
-        public void AcceptsFloatExpression()
-        {
-            var compiler = new Compiler();
-            var testLine = "val value = 1.0 + 2.5f * ( 3.4 + 5 ) / 4.2 - - 2f";
+            var testLine = "val value = one + two * ( three + five )";
 
             var compiledLine = compiler.CompileLine(testLine);
 
@@ -54,7 +92,7 @@ namespace FlowCompilerTests
         public void RejectsUnclosedTerm()
         {
             var compiler = new Compiler();
-            var testLine = "val value = 1 + 2 * (3 + 5) / 4 - ";
+            var testLine = "val value = one + two * (three + five) / four - ";
 
             var compiledLine = compiler.CompileLine(testLine);
 
@@ -67,7 +105,7 @@ namespace FlowCompilerTests
         public void RejectsUnbalancedPerens()
         {
             var compiler = new Compiler();
-            var testLine = "val value = 1 + 2 * (3 + 5 / 4 - 2";
+            var testLine = "val value = one + two * (three + five / four - two";
 
             var compiledLine = compiler.CompileLine(testLine);
 
@@ -77,23 +115,10 @@ namespace FlowCompilerTests
 
         [TestCategory(_expression)]
         [TestMethod]
-        public void RejectsInvalidTerms()
-        {
-            var compiler = new Compiler();
-            var testLine = "val value = 1 + five * (3 + 5 / 4) - 2";
-
-            var compiledLine = compiler.CompileLine(testLine);
-
-            compiledLine.Tokens.OfType<ErrorToken>().
-                Should().Contain(e => e.Error.Contains("Value expected"));
-        }
-
-        [TestCategory(_expression)]
-        [TestMethod]
         public void RejectsIncompleteSubExpression()
         {
             var compiler = new Compiler();
-            var testLine = "val value = 1 + 5 * (3 + 5 / ) - 2";
+            var testLine = "val value = one + 5 * (three + five / ) - two";
 
             var compiledLine = compiler.CompileLine(testLine);
 
@@ -106,7 +131,7 @@ namespace FlowCompilerTests
         public void RejectsOverlengthLine()
         {
             var compiler = new Compiler();
-            var testLine = "val value = 1 + 2 * (3 + 5) / 4 - 2 + 1 + 2 * (3 + 5) / 4 - 2 + 1 + 2 * (3 + 5) / 4 - 2 + 1 + 2 * (3 + 5) / 4 - 2";
+            var testLine = "val value = one + two * (three + five) / four - two + one + two * (three + five) / four - two + 1 + two * (three + five) / four - two + one + two * (three + five) / four - two";
 
             var compiledLine = compiler.CompileLine(testLine);
 
@@ -119,7 +144,7 @@ namespace FlowCompilerTests
         public void ValShouldHaveName()
         {
             var compiler = new Compiler();
-            var testLine = "val = 1 + 2 * (3 + 5) / 4";
+            var testLine = "val = one + two * (three + five) / four";
 
             var compiledLine = compiler.CompileLine(testLine);
 
@@ -132,7 +157,7 @@ namespace FlowCompilerTests
         public void ValShouldHaveAssignment()
         {
             var compiler = new Compiler();
-            var testLine = "val value 1 + 2 * (3 + 5) / 4";
+            var testLine = "val value one + two * (three + five) / four";
 
             var compiledLine = compiler.CompileLine(testLine);
 
@@ -145,7 +170,7 @@ namespace FlowCompilerTests
         public void LineShouldHaveOpeningKeyword()
         {
             var compiler = new Compiler();
-            var testLine = "1 + 2 * (3 + 5)";
+            var testLine = "one + two * (three + five)";
 
             var compiledLine = compiler.CompileLine(testLine);
 
@@ -164,7 +189,46 @@ namespace FlowCompilerTests
             var compiledLine = compiler.CompileLine(testLine);
 
             compiledLine.Tokens.OfType<ErrorToken>().
-            Should().Contain(e => e.Error.Contains("""step must have a name."""));
+            Should().Contain(e => e.Error.Contains("step must have a name"));
+        }
+
+        [TestCategory(_step)]
+        [TestMethod]
+        public void StepCantHaveAnythingAfterName()
+        {
+            var compiler = new Compiler();
+            var testLine = "step name another";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Tokens.OfType<ErrorToken>().
+            Should().Contain(e => e.Error.Contains("step can only have one name"));
+        }
+
+        [TestCategory(_step)]
+        [TestMethod]
+        public void StepNameCannotBeNumber()
+        {
+            var compiler = new Compiler();
+            var testLine = "step 12";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Tokens.OfType<ErrorToken>().
+            Should().Contain(e => e.Error.Contains("step must have a name"));
+        }
+
+        [TestCategory(_step)]
+        [TestMethod]
+        public void StepParses()
+        {
+            var compiler = new Compiler();
+            var testLine = "step SomeStep";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
         }
     }
 }

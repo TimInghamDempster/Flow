@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection.Metadata;
 
 namespace FlowCompiler
 {
@@ -75,28 +76,38 @@ namespace FlowCompiler
             };
         }
 
-        private ParsedLine CompileStep(string s)
+        private ParsedLine CompileStep(string step)
         {
-            throw new NotImplementedException();
+            var tokens = Tokenize(step, "step");
+
+            if(tokens.Count() > 2)
+            {
+                for(int i = 0; i < tokens.Count(); i++) 
+                {
+                    var token = tokens[i];
+                    tokens[i] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "step can only have one name");
+                }
+            }
+
+            if(tokens.Count() < 2 )
+            {
+                tokens.Add(new ErrorToken(1, 1, "", "A step must have a name"));
+            }
+
+            if (tokens[1] is not Name)
+            {
+                var token = tokens[1];
+                tokens[1] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A step must have a name");
+            }
+
+            return TokensToLine(tokens);
         }
 
         public ParsedLine CompileExpression(string expression)
-        { 
-            int index = 3;
-            List<Token> tokens = new();
+        {
+            List<Token> tokens = Tokenize(expression, "val");
 
-            tokens.Add(new Keyword(0, 3, "val"));
-
-            while(index < expression.Length )
-            {
-                var nextToken = GetToken(expression, index);
-                tokens.Add(nextToken);
-                index = nextToken.EndIndex + 1;
-            }
-
-            tokens.RemoveAll(t => t is Space);
-
-            if (tokens.LastOrDefault() is not (NumberToken or ClosePeren))
+            if (tokens.LastOrDefault() is not (NumberToken or ClosePeren or Name))
             {
                 tokens.Add(new ErrorToken(expression.Length, expression.Length, "", "Value expected"));
             }
@@ -111,11 +122,41 @@ namespace FlowCompiler
             if (tokens.ElementAt(1) is not Name) tokens.Insert(1, new ErrorToken(1, 1, "", "val must have a name."));
             if (tokens.ElementAt(2) is not Assignment) tokens.Insert(1, new ErrorToken(1, 1, "", "expression must have an assignment."));
 
-            CheckSyntax(tokens, 3);
+            if (tokens.OfType<NumberToken>().Any() && tokens.Count > 4)
+            {
+                var id = tokens.FindIndex(t => t is NumberToken);
+                var et = tokens[id];
+                tokens[id] = new ErrorToken(et.StartIndex, et.EndIndex, et.Value, "Expressions cannot contain numeric literals");
+            }
 
+            CheckSyntax(tokens, 3);
+            return TokensToLine(tokens);
+        }
+
+        private static ParsedLine TokensToLine(List<Token> tokens)
+        {
             return tokens.OfType<ErrorToken>().Any() ?
                 new ErrorLine(tokens) :
                 new GoodLine(tokens);
+        }
+
+        private List<Token> Tokenize(string expression, string keyword)
+        {
+            int index = keyword.Length;
+            List<Token> tokens = new();
+
+            tokens.Add(new Keyword(0, 3, keyword));
+
+            while (index < expression.Length)
+            {
+                var nextToken = GetToken(expression, index);
+                tokens.Add(nextToken);
+                index = nextToken.EndIndex + 1;
+            }
+
+            tokens.RemoveAll(t => t is Space);
+
+            return tokens;
         }
 
         private void CheckSyntax(List<Token> tokens, int skipCount)
@@ -132,13 +173,13 @@ namespace FlowCompiler
 
         private Token ValidateNextToken(Token previousToken, Token token) => (previousToken, token) switch
             {
-                (NumberToken, Operator) => token,
-                (Operator, NumberToken) => token,
+                (Name, Operator) => token,
+                (Operator, Name) => token,
                 (Operator, Operator) and {token.Value: "-" } => token,
                 (Operator, OpenPeren) => token,
                 (ClosePeren, Operator) => token,
-                (OpenPeren, NumberToken) => token,
-                (NumberToken, ClosePeren) => token,
+                (OpenPeren, Name) => token,
+                (Name, ClosePeren) => token,
                 (_, ErrorToken) => token,
                 (Operator, _) => new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "Value expected"),
                 _ => new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "Unknown syntax error")
