@@ -1,16 +1,9 @@
 ﻿using System.Diagnostics;
-using System.Reflection.Metadata;
 
 namespace FlowCompiler
 {
     public record ParsedLine(IReadOnlyList<Token> Tokens);
-    public record GoodLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens)
-    {
-        public override string ToString()
-        {
-            return string.Join(' ', Tokens.Select(t => t.Value));
-        }
-    }
+    public record GoodLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
     public record ErrorLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
 
 

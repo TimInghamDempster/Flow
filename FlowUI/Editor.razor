@@ -1,8 +1,14 @@
 ﻿@using FlowCompiler
 
-<input type="text" value="@CodeLine" placeholder="Enter code here" oninput="@this.LineChanged"/>
+<div>
+    @foreach(var linePart in CodeLine)
+    {
+        <span style="color:@linePart.Colour">@linePart.Text</span>
+    }
+</div>
 <button onclick="@this.RunProgram">Run</button>
 <br/>
+
 <div>Result: @EvaluatedResult</div>
 <br/>
 <div>@Error</div>
@@ -10,13 +16,25 @@
 @code {
     private ParsedLine? _line;
 
+    private record LinePart(string Text, string Colour = "black");
+
     [Inject]
     private ICompiler? Compiler{ get; set; }
     [Inject] 
     private IDebugger? Debugger{ get; set; }
 
-    [Parameter] 
-    public string CodeLine { get; set; } = "";
+    private IEnumerable<LinePart> CodeLine
+    {
+        get
+        {
+            yield return new LinePart("Test ", "blue");
+            yield return new LinePart("Part ");
+            yield return new LinePart("3");
+        }
+    }
+    /*(_line is GoodLine goodLine) ?
+        goodLine.Tokens.Select(t => new LinePart(t.Value)) :
+        Enumerable.Empty<LinePart>();*/
 
     [Parameter] 
     public string EvaluatedResult { get; set; } = "Not run yet";
@@ -32,7 +50,6 @@
 
         if (_line is GoodLine goodLine)
         {
-            CodeLine = goodLine.ToString();
             ValueChanged.InvokeAsync();
         }
     }
