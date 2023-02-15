@@ -3,7 +3,14 @@
 namespace FlowCompiler
 {
     public record ParsedLine(IReadOnlyList<Token> Tokens);
-    public record GoodLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
+    public record GoodLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens)
+    {
+        public override string ToString()
+        {
+            return string.Join(' ', Tokens.Select(t => t.Value));
+        }
+    }
+
     public record ErrorLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
 
 
@@ -35,7 +42,7 @@ namespace FlowCompiler
         {
             if (generatedCode is not GoodLine line) return;
 
-            var code = $" __declspec(dllexport) int test_func() {{ return {line};}}";
+            var code = $" __declspec(dllexport) int test_func() {{ return {line.Tokens.Last().Value};}}";
 
             var path = Path.Combine(Environment.CurrentDirectory, @"Content\test.c");
             File.WriteAllText(path, code);
@@ -112,6 +119,7 @@ namespace FlowCompiler
                 tokens.Add(new ErrorToken(expression.Length, expression.Length, "", "Unclosed bracket"));
             }
 
+            if (tokens.Count < 4) tokens.Insert(1, new ErrorToken(1, 1, "", "Expression incomplete"));
             if (tokens.ElementAt(1) is not Name) tokens.Insert(1, new ErrorToken(1, 1, "", "val must have a name."));
             if (tokens.ElementAt(2) is not Assignment) tokens.Insert(1, new ErrorToken(1, 1, "", "expression must have an assignment."));
 

@@ -1,6 +1,6 @@
 ﻿@using FlowCompiler
 
-<div>
+<div tabindex="0" onkeypress="@TypingHappened" onkeydown="@SpecialKey" >
     @foreach(var linePart in CodeLine)
     {
         @(linePart switch
@@ -33,11 +33,20 @@
 
     private Caret[] _caret = new[] { new Caret()};
     private IEnumerable<ILinePart> CodeLine =>
-        _line?.Tokens.Select<Token,ILinePart>(t => new LinePart(t.Value)).Concat(_caret) ??
+        _line?.Tokens.Select<Token,ILinePart>(t =>
+            t switch
+            {
+                Keyword => new LinePart(t.Value + " ", "cornflowerblue"),
+                Name => new LinePart(t.Value + " ", "gold"),
+                _ => new LinePart(t.Value)
+            }
+        ).Concat(_caret) ??
         _caret;
 
     [Parameter] 
     public string EvaluatedResult { get; set; } = "Not run yet";
+
+    private string _code = "";
 
     public string Error => string.Join("\n", _line?.Tokens.OfType<ErrorToken>().Select(e => e.Error) ?? Enumerable.Empty<string>());
 
@@ -92,5 +101,20 @@
     {
         StartCursorBlink();
         return base.OnInitializedAsync();
+    }
+
+    private void TypingHappened(KeyboardEventArgs e)
+    {
+        _code += e.Key;
+        _line = Compiler?.CompileLine(_code);
+    }
+
+    private void SpecialKey(KeyboardEventArgs e)
+    {
+        if(e.Key == "Backspace")
+        {
+            _code = _code.Remove(_code.Length - 1);
+            _line = Compiler?.CompileLine(_code);
+        }
     }
 }
