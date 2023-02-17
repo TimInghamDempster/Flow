@@ -27,6 +27,7 @@ namespace FlowCompiler
     public record ErrorToken(int StartIndex, int EndIndex, string Value, string Error) : Token(StartIndex, EndIndex, Value);
     public record Name(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
     public record Keyword(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
+    public record StringLiteral(int StartIndex, int EndIndex, string Value) : Token(StartIndex,EndIndex, Value);
 
     public interface ICompiler
     {
@@ -107,7 +108,7 @@ namespace FlowCompiler
         {
             List<Token> tokens = Tokenize(expression, "val");
 
-            if (tokens.LastOrDefault() is not (NumberToken or ClosePeren or Name))
+            if (tokens.LastOrDefault() is not (NumberToken or ClosePeren or Name or StringLiteral))
             {
                 tokens.Add(new ErrorToken(expression.Length, expression.Length, "", "Value expected"));
             }
@@ -127,7 +128,13 @@ namespace FlowCompiler
             {
                 var id = tokens.FindIndex(t => t is NumberToken);
                 var et = tokens[id];
-                tokens[id] = new ErrorToken(et.StartIndex, et.EndIndex, et.Value, "Expressions cannot contain numeric literals");
+                tokens[id] = new ErrorToken(et.StartIndex, et.EndIndex, et.Value, "Complex expressions cannot contain numeric literals");
+            }
+            if (tokens.OfType<StringLiteral>().Any() && tokens.Count > 4)
+            {
+                var id = tokens.FindIndex(t => t is StringLiteral);
+                var et = tokens[id];
+                tokens[id] = new ErrorToken(et.StartIndex, et.EndIndex, et.Value, "Complex expressions cannot contain string literals");
             }
 
             CheckSyntax(tokens, 3);
@@ -197,8 +204,24 @@ namespace FlowCompiler
                 '*' => new Operator(index, index, "*"),
                 '=' => new Assignment(index, index),
                 >= '0' and <= '9' => Number(line, index),
+                '\"' => GetStringLiteral(line, index),
                 _ => GetName(line, index)
             };
+
+        private Token GetStringLiteral(string line, int index)
+        {
+            var endIndex = index+ 1;
+
+            while(endIndex< line.Length && line[endIndex] != '\"') { endIndex++; }
+            endIndex++;
+
+            if(endIndex > line.Length)
+            {
+                return new ErrorToken(index, endIndex, line.Substring(index), "Unclosed string literal");
+            }
+
+            return new StringLiteral(index, endIndex, line.Substring(index, endIndex - index));
+        }
 
         private Name GetName(string line, int index)
         {

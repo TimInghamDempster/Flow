@@ -12,7 +12,7 @@ namespace FlowCompilerTests
 
         [TestCategory(_expression)]
         [TestMethod]
-        public void RejectsLiterals()
+        public void RejectsCompoundIntLiterals()
         {
             var compiler = new Compiler();
             var testLine = "val value = one + two * ( three + 5 ) / 4 - - two";
@@ -25,10 +25,51 @@ namespace FlowCompilerTests
 
         [TestCategory(_expression)]
         [TestMethod]
-        public void AcceptsConstInt()
+        public void RejectsCompoundStringLiterals()
+        {
+            var compiler = new Compiler();
+            var testLine = "val value = one + \"three\"";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Should().BeOfType<ErrorLine>();
+            
+            compiledLine.Tokens.OfType<ErrorToken>().Should().Contain(e => e.Error.Contains("literal"));
+        }
+
+        [TestCategory(_expression)]
+        [TestMethod]
+        public void AcceptsLiteralInt()
         {
             var compiler = new Compiler();
             var testLine = "val value = 15";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
+        }
+
+        [TestCategory(_expression)]
+        [TestMethod]
+        public void RejectsSingleQuote()
+        {
+            var compiler = new Compiler();
+            var testLine = "val value = \"";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Should().BeOfType<ErrorLine>();
+            compiledLine.Tokens.OfType<ErrorToken>().
+                Should().Contain(e => e.Error.Contains("Unclosed string literal"));
+        }
+
+        [TestCategory(_expression)]
+        [TestMethod]
+        public void AcceptsLiteralString()
+        {
+            var compiler = new Compiler();
+            var testLine = "val value = \"fifteen\"";
 
             var compiledLine = compiler.CompileLine(testLine);
 
