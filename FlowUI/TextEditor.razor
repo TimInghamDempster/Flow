@@ -111,7 +111,7 @@
 
     private void SpecialKey(KeyboardEventArgs e)
     {
-        if (e.Key == "Backspace")
+        if (e.Key == "Backspace" && _code.Any())
         {
             _code = _code.Remove(_code.Length - 1);
             _line = Compiler?.CompileLine(_code);
