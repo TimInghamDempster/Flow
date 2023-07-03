@@ -43,7 +43,7 @@ namespace FlowCompiler
         {
             if (generatedCode is not GoodLine line) return;
 
-            var code = $" __declspec(dllexport) int test_func() {{ return {line.Tokens.Last().Value};}}";
+            var code = $" __declspec(dllexport) int test_func() {{ return {line.Tokens.Last().Value.Length};}}";
 
             var path = Path.Combine(Environment.CurrentDirectory, @"Content\test.c");
             File.WriteAllText(path, code);

@@ -4,22 +4,25 @@
 
 typedef int(__stdcall* f_funci)();
 
-int Evaluate()
+void Evaluate(int* res)
 {
     HINSTANCE hGetProcIDDLL = LoadLibrary(L"Content\\test.dll");
 
     if (!hGetProcIDDLL) {
-        return -1;
+        *res = -1;
+        return;
     }
 
     f_funci funci = (f_funci)GetProcAddress(hGetProcIDDLL, "test_func");
     if (!funci) {
-        return EXIT_FAILURE;
+        *res = -1;
+        return;
     }
 
     auto val = funci();
+    *res = val;
 
     FreeLibrary(hGetProcIDDLL);
 
-    return val;
+    return;
 }

@@ -10,11 +10,13 @@ namespace FlowCompiler
     public class Debugger : IDebugger
     {
         [DllImport("Runtime", CharSet = CharSet.Unicode, SetLastError = true)]
-        private static extern int Evaluate();
+        private static extern void Evaluate(ref int val);
 
         public int LaunchApplication(string exePath)
         {
-            return Evaluate();
+            int res = -1;
+            Evaluate(ref res);
+            return res;
         }
     }
 }
