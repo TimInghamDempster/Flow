@@ -74,8 +74,30 @@ namespace FlowCompiler
                 var s when s.StartsWith("val") => CompileExpression(s),
                 var s when s.StartsWith("step") => CompileStep(s),
                 var s when s.StartsWith("message") => CompileMessage(s),
+                var s when s.StartsWith("test") => CompileTest(s),
                 _ => new ErrorLine(new List<Token> { new ErrorToken(0,0,line, """Line must start with "val" or "step".""") })
             };
+        }
+
+        private ParsedLine CompileTest(string test)
+        {
+            var tokens = Tokenize(test, "test");
+
+            if (tokens.Count() < 2)
+            {
+                tokens.Add(new ErrorToken(1, 1, "", "A test must have a name"));
+            }
+            if (tokens.Count() > 2)
+            {
+                tokens.Add(new ErrorToken(1, 1, "", "A test can only have one name"));
+            }
+
+            if (tokens[1] is not (Name or ErrorToken))
+            {   var token = tokens[1];
+                tokens[1] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A test name must be valid");
+            }
+
+            return TokensToLine(tokens);
         }
 
         private ParsedLine CompileMessage(string messageDef)
@@ -85,6 +107,14 @@ namespace FlowCompiler
             if (tokens.Count() < 2)
             {
                 tokens.Add(new ErrorToken(1, 1, "", "A message must have a name"));
+            }
+            if (tokens.Count() > 2)
+            {
+                for (int i = 0; i < tokens.Count(); i++)
+                {
+                    var token = tokens[i];
+                    tokens[i] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "test can only have one name");
+                }
             }
 
             return TokensToLine(tokens);

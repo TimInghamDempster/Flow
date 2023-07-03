@@ -10,6 +10,7 @@ namespace FlowCompilerTests
         private const string _step = "Step";
         private const string _structure = "Structure";
         private const string _message = "Message";
+        private const string _test = "Test";
 
         [TestCategory(_expression)]
         [TestMethod]
@@ -284,6 +285,59 @@ namespace FlowCompilerTests
 
             compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("message must have a name"));
+        }
+
+        [TestCategory(_test)]
+        [TestMethod]
+        public void TestShouldHaveName()
+        {
+            var compiler = new Compiler();
+            var testLine = "test";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Tokens.OfType<ErrorToken>().
+            Should().Contain(e => e.Error.Contains("test must have a name"));
+        }
+
+        [TestCategory(_test)]
+        [TestMethod]
+        public void TestNameShouldBeExtracted()
+        {
+            var compiler = new Compiler();
+            var testName = "someTest";
+            var testLine = $"test {testName}";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Tokens.OfType<Name>().
+            Should().Contain(s => s.Value == testName);
+        }
+
+        [TestCategory (_test)]
+        [TestMethod]
+        public void TestNameShouldBeLabel()
+        {
+            var compiler = new Compiler();
+            var testLine = "test 123";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Tokens.OfType<ErrorToken>().
+            Should().Contain(e => e.Error.Contains("test name must be valid"));
+        }
+
+        [TestCategory(_test)]
+        [TestMethod]
+        public void TestCanOnlyHaveOneName()
+        {
+            var compiler = new Compiler();
+            var testLine = "test name another";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Tokens.OfType<ErrorToken>().
+            Should().Contain(e => e.Error.Contains("test can only have one name"));
         }
     }
 }
