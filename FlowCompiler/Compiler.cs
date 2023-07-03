@@ -73,8 +73,21 @@ namespace FlowCompiler
             {
                 var s when s.StartsWith("val") => CompileExpression(s),
                 var s when s.StartsWith("step") => CompileStep(s),
+                var s when s.StartsWith("message") => CompileMessage(s),
                 _ => new ErrorLine(new List<Token> { new ErrorToken(0,0,line, """Line must start with "val" or "step".""") })
             };
+        }
+
+        private ParsedLine CompileMessage(string messageDef)
+        {
+            var tokens = Tokenize(messageDef, "message");
+
+            if (tokens.Count() < 2)
+            {
+                tokens.Add(new ErrorToken(1, 1, "", "A message must have a name"));
+            }
+
+            return TokensToLine(tokens);
         }
 
         private ParsedLine CompileStep(string step)
@@ -151,9 +164,10 @@ namespace FlowCompiler
         private List<Token> Tokenize(string expression, string keyword)
         {
             int index = keyword.Length;
-            List<Token> tokens = new();
-
-            tokens.Add(new Keyword(0, 3, keyword));
+            List<Token> tokens = new()
+            {
+                new Keyword(0, index, keyword)
+            };
 
             while (index < expression.Length)
             {
@@ -313,6 +327,5 @@ namespace FlowCompiler
                 _ => new ErrorToken(index, workingIndex, value, "Invalid number format")
             };
         }
-
     }
 }

@@ -9,6 +9,7 @@ namespace FlowCompilerTests
         private const string _expression = "Expression";
         private const string _step = "Step";
         private const string _structure = "Structure";
+        private const string _message = "Message";
 
         [TestCategory(_expression)]
         [TestMethod]
@@ -270,6 +271,19 @@ namespace FlowCompilerTests
 
             compiledLine.Should().BeOfType<GoodLine>();
             compiledLine.ToString().Should().Be(testLine);
+        }
+
+        [TestCategory(_message)]
+        [TestMethod]
+        public void MessageShouldHaveName()
+        {
+            var compiler = new Compiler();
+            var testLine = "message";
+
+            var compiledLine = compiler.CompileLine(testLine);
+
+            compiledLine.Tokens.OfType<ErrorToken>().
+            Should().Contain(e => e.Error.Contains("message must have a name"));
         }
     }
 }
