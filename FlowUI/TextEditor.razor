@@ -1,16 +1,21 @@
 ﻿@using FlowCompiler
 
-<div tabindex="0" onkeypress="@TypingHappened" onkeydown="@SpecialKey">
-    @foreach (var linePart in CodeLine)
-    {
-        @(linePart switch
+@foreach(var line in CodeLines)
+{
+    <div tabindex="0" onkeypress="@TypingHappened" onkeydown="@SpecialKey" onclick="@(() => LineClick(line.Index))">
+    
+        @foreach (var linePart in line.Parts)
         {
-            LinePart lp => (@<span style="color:@lp.Colour">@lp.Text</span>),
-            Caret => (@<span style="opacity:@CursorOpacity">|</span>),
-            _ => (@<span />)
-        })
-    }
-</div>
+            @(linePart switch
+            {
+                LinePart lp => (@<span style="color:@lp.Colour">@lp.Text</span>),
+                Caret => (@<span style="opacity:@CursorOpacity">|</span>),
+                _ => (@<span />)
+            })
+        }
+    </div>
+}
+
 <br />
 <button onclick="@this.RunProgram">Run</button>
 <br />
@@ -20,11 +25,20 @@
 <div>@Error</div>
 
 @code {
-    private ParsedLine? _line;
+    private readonly List<ParsedLine> _lines = new() { new(new List<Token>())};
+    private ParsedLine CurrentLine 
+    {
+        get => _lines[_currentLine];
+        set => _lines[_currentLine] = value;
+    }
 
     private interface ILinePart { };
     private record LinePart(string Text, string Colour = "black") : ILinePart;
     private record Caret() : ILinePart;
+
+    private record Line(IEnumerable<ILinePart> Parts, int Index);
+
+    private int _currentLine = 0;
 
     [Inject]
     private ICompiler? Compiler { get; set; }
@@ -32,45 +46,41 @@
     private IDebugger? Debugger { get; set; }
 
     private Caret[] _caret = new[] { new Caret() };
-    private IEnumerable<ILinePart> CodeLine =>
-        _line?.Tokens.Select<Token, ILinePart>(t =>
+    private IEnumerable<Line> CodeLines =>
+    _lines.Select((l, i) =>
+     new Line(
+         new ILinePart[] { new LinePart("> ") }.Concat(
+        l.Tokens.Select<Token, ILinePart>(t =>
             t switch
             {
                 Keyword => new LinePart(t.Value + " ", "cornflowerblue"),
                 Name => new LinePart(t.Value + " ", "gold"),
                 _ => new LinePart(t.Value)
             }
-        ).Concat(_caret) ??
-        _caret;
+        )).Concat(
+            i == _currentLine ? 
+            _caret :
+            Enumerable.Empty<ILinePart>()) ??
+            _caret, i));
 
     [Parameter]
     public string EvaluatedResult { get; set; } = "Not run yet";
 
     private string _code = "";
 
-    public string Error => string.Join("\n", _line?.Tokens.OfType<ErrorToken>().Select(e => e.Error) ?? Enumerable.Empty<string>());
+    public string Error => string.Join("\n", CurrentLine?.Tokens.OfType<ErrorToken>().Select(e => e.Error) ?? Enumerable.Empty<string>());
 
     [Parameter]
     public EventCallback ValueChanged { get; set; }
-
-    private void LineChanged(ChangeEventArgs e)
-    {
-        _line = Compiler?.CompileLine(e.Value?.ToString() ?? "");
-
-        if (_line is GoodLine goodLine)
-        {
-            ValueChanged.InvokeAsync();
-        }
-    }
 
     private void RunProgram()
     {
         // Can't actually happen, but injection and nullable
         // references don't play nicely
-        if (_line is null) return;
+        if (CurrentLine is null) return;
 
         var dllPath = @"Content\test.dll";
-        Compiler?.BuildDll(dllPath, _line);
+        Compiler?.BuildDll(dllPath, CurrentLine);
         EvaluatedResult = Debugger?.LaunchApplication(dllPath).ToString() ?? "Error";
 
         ValueChanged.InvokeAsync();
@@ -103,18 +113,64 @@
         return base.OnInitializedAsync();
     }
 
+    private void LineClick(int index)
+    {
+        ChangeLine(index);
+    }
+
+    private void ChangeLine(int index)
+    {
+        _currentLine = index;
+        _code = CurrentLine.Tokens.Any() ?
+            CurrentLine.Tokens.Select(t => t.Value).Aggregate((a, b) => a + " " + b) :
+            "";
+
+        if (Compiler is null) return;
+        CurrentLine = Compiler.CompileLine(_code);
+    }
+
     private void TypingHappened(KeyboardEventArgs e)
     {
+        if(e.Key == "Enter")
+        {
+            _lines.Add(new(new List<Token>()));
+            ChangeLine(_currentLine + 1);
+            return;
+        }
         _code += e.Key;
-        _line = Compiler?.CompileLine(_code);
+        if (Compiler is null) return;
+        CurrentLine = Compiler.CompileLine(_code);
     }
 
     private void SpecialKey(KeyboardEventArgs e)
     {
-        if (e.Key == "Backspace" && _code.Any())
+        if (e.Key == "Backspace")
         {
-            _code = _code.Remove(_code.Length - 1);
-            _line = Compiler?.CompileLine(_code);
+            if (_code.Any())
+            {
+                _code = _code.Remove(_code.Length - 1);
+                if (Compiler is null) return;
+                CurrentLine = Compiler.CompileLine(_code);
+            }
+            else if (_currentLine > 0)
+            {
+                _lines.RemoveAt(_currentLine);
+                ChangeLine(_currentLine - 1);
+            }
+        }
+        if(e.Key == "ArrowUp")
+        {
+            if (_currentLine > 0)
+            {
+                ChangeLine(_currentLine - 1);
+            }
+        }
+        if(e.Key == "ArrowDown")
+        {
+            if (_currentLine < _lines.Count - 1)
+            {
+                ChangeLine(_currentLine + 1);
+            }
         }
     }
 }
