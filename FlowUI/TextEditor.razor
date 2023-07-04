@@ -8,7 +8,7 @@
         {
             @(linePart switch
             {
-                LinePart lp => (@<span style="color:@lp.Colour">@lp.Text</span>),
+                LinePart lp => (@<span style="color:@lp.Colour" title="@lp.Tooltip">@lp.Text</span>),
                 Caret => (@<span style="opacity:@CursorOpacity">|</span>),
                 _ => (@<span />)
             })
@@ -22,7 +22,6 @@
 
 <div>Result: @EvaluatedResult</div>
 <br />
-<div>@Error</div>
 
 @code {
     private readonly List<ParsedLine> _lines = new() { new(new List<Token>())};
@@ -33,7 +32,7 @@
     }
 
     private interface ILinePart { };
-    private record LinePart(string Text, string Colour = "black") : ILinePart;
+    private record LinePart(string Text, string Colour = "black", string Tooltip = "") : ILinePart;
     private record Caret() : ILinePart;
 
     private record Line(IEnumerable<ILinePart> Parts, int Index);
@@ -55,6 +54,10 @@
             {
                 Keyword => new LinePart(t.Value + " ", "cornflowerblue"),
                 Name => new LinePart(t.Value + " ", "gold"),
+                ErrorToken e => new LinePart(
+                    e.Value.Any() ? e.Value + " " : "_ ",
+                    "red",
+                    e.Error),
                 _ => new LinePart(t.Value)
             }
         )).Concat(
@@ -67,8 +70,6 @@
     public string EvaluatedResult { get; set; } = "Not run yet";
 
     private string _code = "";
-
-    public string Error => string.Join("\n", CurrentLine?.Tokens.OfType<ErrorToken>().Select(e => e.Error) ?? Enumerable.Empty<string>());
 
     [Parameter]
     public EventCallback ValueChanged { get; set; }
