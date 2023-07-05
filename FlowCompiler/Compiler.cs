@@ -58,8 +58,8 @@ namespace FlowCompiler
             compiler.StartInfo.UseShellExecute = false;
 
             compiler.Start();
-            compiler.StandardInput.WriteLine("\"" + @"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" + "\"");
-            compiler.StandardInput.WriteLine("cl.exe /LD test.c");
+            compiler.StandardInput.WriteLine("nasm -f win64 flowprogram.asm");
+            compiler.StandardInput.WriteLine("golink /dll flowprogram.obj ntdll.dll");
             compiler.StandardInput.WriteLine(@"exit");
             string output = compiler.StandardOutput.ReadToEnd();
             string error = compiler.StandardError.ReadToEnd();

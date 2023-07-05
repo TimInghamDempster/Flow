@@ -6,7 +6,7 @@ typedef int(__stdcall* f_funci)();
 
 void Evaluate(int* res)
 {
-    HINSTANCE hGetProcIDDLL = LoadLibrary(L"Content\\test.dll");
+    HINSTANCE hGetProcIDDLL = LoadLibrary(L"Content\\flowprogram.dll");
 
     if (!hGetProcIDDLL) {
         *res = -1;
