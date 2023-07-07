@@ -43,9 +43,19 @@ namespace FlowCompiler
         {
             if (generatedCode is not GoodLine line) return;
 
-            var code = $" __declspec(dllexport) int test_func() {{ return {line.Tokens.Last().Value.Length};}}";
+            var dllName = Path.GetFileNameWithoutExtension(dllPath);
 
-            var path = Path.Combine(Environment.CurrentDirectory, @"Content\test.c");
+            var code = 
+                $"global test_func\r\n" +
+                $"export test_func\r\n" +
+                $"\r\n" +
+                $"section .text\r\n" +
+                $"\r\n" +
+                $"test_func:\r\n" +
+                $"        mov    eax,  {line.Tokens.Last().Value.Length}\r\n" +
+                $"        ret";
+
+            var path = Path.Combine(Environment.CurrentDirectory, $"Content/{dllName}.asm");
             File.WriteAllText(path, code);
 
             Process compiler = new Process();
@@ -58,8 +68,8 @@ namespace FlowCompiler
             compiler.StartInfo.UseShellExecute = false;
 
             compiler.Start();
-            compiler.StandardInput.WriteLine("nasm -f win64 flowprogram.asm");
-            compiler.StandardInput.WriteLine("golink /dll flowprogram.obj ntdll.dll");
+            compiler.StandardInput.WriteLine($"nasm -f win64 {dllName}.asm");
+            compiler.StandardInput.WriteLine($"golink /dll {dllName}.obj ntdll.dll");
             compiler.StandardInput.WriteLine(@"exit");
             string output = compiler.StandardOutput.ReadToEnd();
             string error = compiler.StandardError.ReadToEnd();
