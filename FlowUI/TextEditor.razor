@@ -24,8 +24,8 @@
 <br />
 
 @code {
-    private readonly List<ParsedLine> _lines = new() { new(new List<Token>())};
-    private ParsedLine CurrentLine 
+    private readonly List<CompiledLine> _lines = new() { new(new(new List<ILInstruction>()), new(new List<Token>())) };
+    private CompiledLine CurrentLine
     {
         get => _lines[_currentLine];
         set => _lines[_currentLine] = value;
@@ -49,7 +49,7 @@
     _lines.Select((l, i) =>
      new Line(
          new ILinePart[] { new LinePart("> ") }.Concat(
-        l.Tokens.Select<Token, ILinePart>(t =>
+        l.Line.Tokens.Select<Token, ILinePart>(t =>
             t switch
             {
                 Keyword => new LinePart(t.Value + " ", "cornflowerblue"),
@@ -122,8 +122,8 @@
     private void ChangeLine(int index)
     {
         _currentLine = index;
-        _code = CurrentLine.Tokens.Any() ?
-            CurrentLine.Tokens.Select(t => t.Value).Aggregate((a, b) => a + " " + b) :
+        _code = CurrentLine.Line.Tokens.Any() ?
+            CurrentLine.Line.Tokens.Select(t => t.Value).Aggregate((a, b) => a + " " + b) :
             "";
 
         if (Compiler is null) return;
@@ -134,7 +134,7 @@
     {
         if(e.Key == "Enter")
         {
-            _lines.Add(new(new List<Token>()));
+            _lines.Add(new(new(new List<ILInstruction>()), new(new List<Token>())));
             ChangeLine(_currentLine + 1);
             return;
         }

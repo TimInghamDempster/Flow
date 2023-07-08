@@ -1,7 +1,16 @@
 ﻿using System.Diagnostics;
+using System.Text;
 
 namespace FlowCompiler
 {
+    public record Test(IReadOnlyList<Message> Input, IReadOnlyList<Step> Code, IReadOnlyList<Message> Result);
+    public record Message();
+    public record Step();
+    public record CompiledLine(ILCode Code, ParsedLine Line);
+    public interface ILInstruction{}
+    public record SetVal(int value) : ILInstruction;
+    public record EndFunc() : ILInstruction;
+    public record ILCode(IReadOnlyList<ILInstruction> IL);
     public record ParsedLine(IReadOnlyList<Token> Tokens);
     public record GoodLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens)
     {
@@ -31,29 +40,44 @@ namespace FlowCompiler
 
     public interface ICompiler
     {
-        ParsedLine CompileLine(string line);
+        CompiledLine CompileLine(string line);
 
-        void BuildDll(string exePath, ParsedLine genereatedCode);
+        void BuildDll(string exePath, CompiledLine genereatedCode);
     }
 
     public class Compiler : ICompiler
     {
         private const int _maxLineLength = 80;
-        public void BuildDll(string dllPath, ParsedLine generatedCode)
+
+        private string x64FromIL(ILCode iL)
         {
-            if (generatedCode is not GoodLine line) return;
+            var code = new StringBuilder($"global test_func\r\n" +
+               $"export test_func\r\n" +
+               $"\r\n" +
+               $"section .text\r\n" +
+               $"\r\n" +
+               $"test_func:\r\n");
+               
+            foreach (var instruction in iL.IL)
+            {
+                code.Append(instruction switch
+                {
+                    SetVal setVal => $"        mov    eax,  {setVal.value}\r\n",
+                    EndFunc endFunc => $"        ret\r\n",
+                    _ => throw new NotImplementedException()
+                });
+            }
+
+            return code.ToString();
+        }
+
+        public void BuildDll(string dllPath, CompiledLine generatedCode)
+        {
+            if (generatedCode.Line is not GoodLine line) return;
 
             var dllName = Path.GetFileNameWithoutExtension(dllPath);
 
-            var code = 
-                $"global test_func\r\n" +
-                $"export test_func\r\n" +
-                $"\r\n" +
-                $"section .text\r\n" +
-                $"\r\n" +
-                $"test_func:\r\n" +
-                $"        mov    eax,  {line.Tokens.Last().Value.Length}\r\n" +
-                $"        ret";
+            var code = x64FromIL(generatedCode.Code);
 
             var path = Path.Combine(Environment.CurrentDirectory, $"Content/{dllName}.asm");
             File.WriteAllText(path, code);
@@ -77,7 +101,7 @@ namespace FlowCompiler
             compiler.Close();
         }
 
-        public ParsedLine CompileLine(string line)
+        public CompiledLine CompileLine(string line)
         {
             return line switch
             {
@@ -85,11 +109,13 @@ namespace FlowCompiler
                 var s when s.StartsWith("step") => CompileStep(s),
                 var s when s.StartsWith("message") => CompileMessage(s),
                 var s when s.StartsWith("test") => CompileTest(s),
-                _ => new ErrorLine(new List<Token> { new ErrorToken(0,0,line, """Line must start with "val" or "step".""") })
+                _ => 
+                new (new(new List<ILInstruction>()),
+                    new ErrorLine(new List<Token> { new ErrorToken(0,0,line, """Line must start with "val" or "step".""") })                    )
             };
         }
 
-        private ParsedLine CompileTest(string test)
+        private CompiledLine CompileTest(string test)
         {
             var tokens = Tokenize(test, "test");
 
@@ -107,10 +133,10 @@ namespace FlowCompiler
                 tokens[1] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A test name must be valid");
             }
 
-            return TokensToLine(tokens);
+            return new(new(new List<ILInstruction>()), TokensToLine(tokens));
         }
 
-        private ParsedLine CompileMessage(string messageDef)
+        private CompiledLine CompileMessage(string messageDef)
         {
             var tokens = Tokenize(messageDef, "message");
 
@@ -127,10 +153,19 @@ namespace FlowCompiler
                 }
             }
 
-            return TokensToLine(tokens);
+            return new(new(new List<ILInstruction>()), TokensToLine(tokens));
         }
 
-        private ParsedLine CompileStep(string step)
+        private ILCode TestIL(GoodLine line)
+        {
+            return new(new List<ILInstruction>
+            {
+                new SetVal(line.ToString().Length),
+                new EndFunc()
+            });
+        }
+
+        private CompiledLine CompileStep(string step)
         {
             var tokens = Tokenize(step, "step");
 
@@ -154,10 +189,12 @@ namespace FlowCompiler
                 tokens[1] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A step must have a name");
             }
 
-            return TokensToLine(tokens);
+            var line = TokensToLine(tokens);
+            return new(line is GoodLine goodLine ? TestIL(goodLine) :
+                new(new List<ILInstruction>()), line);
         }
 
-        public ParsedLine CompileExpression(string expression)
+        public CompiledLine CompileExpression(string expression)
         {
             List<Token> tokens = Tokenize(expression, "val");
 
@@ -191,7 +228,7 @@ namespace FlowCompiler
             }
 
             CheckSyntax(tokens, 3);
-            return TokensToLine(tokens);
+            return new(new(new List<ILInstruction>()), TokensToLine(tokens));
         }
 
         private static ParsedLine TokensToLine(List<Token> tokens)
