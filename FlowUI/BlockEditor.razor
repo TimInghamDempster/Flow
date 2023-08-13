@@ -1,0 +1,135 @@
+﻿@using FlowCompiler;
+@foreach (var line in CodeLines)
+{
+    <div tabindex="0" onkeypress="@TypingHappened" onkeydown="@SpecialKey" onclick="@(() => LineClick(line.Index))">
+
+        @foreach (var linePart in line.Parts)
+        {
+            @(linePart switch
+            {
+                LinePart lp => (@<span style="color:@lp.Colour" title="@lp.Tooltip">@lp.Text</span>),
+                Caret => (@<span style="opacity:@CursorOpacity">|</span>),
+                _ => (@<span />)
+            })
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public CodeBlock? Block { get; set; }
+    [Parameter]
+    public EventCallback<IChangeData> BlockChanged { get; set; }
+
+    private interface ILinePart { };
+    private record LinePart(string Text, string Colour = "black", string Tooltip = "") : ILinePart;
+    private record Caret() : ILinePart;
+    private record EditorLine(IEnumerable<ILinePart> Parts, int Index);
+    private Caret[] _caret = new[] { new Caret() };
+    private int _currentLine = 0;
+
+    private IEnumerable<EditorLine> CodeLines =>
+        Block?.Lines.Select((l, i) =>
+         new EditorLine(
+             new ILinePart[] { new LinePart("> ") }.Concat(
+            l.ParsedLine.Tokens.Select<Token, ILinePart>(t =>
+                t switch
+                {
+                    Keyword => new LinePart(t.Value + " ", "cornflowerblue"),
+                    Name => new LinePart(t.Value + " ", "gold"),
+                    ErrorToken e => new LinePart(
+                        e.Value.Any() ? e.Value + " " : "_ ",
+                        "red",
+                        e.Error),
+                    _ => new LinePart(t.Value)
+                }
+            )).Concat(
+                i == _currentLine ?
+                _caret :
+                Enumerable.Empty<ILinePart>()) ??
+                _caret, i)) ?? Enumerable.Empty<EditorLine>();
+
+
+    private System.Timers.Timer _timer = new();
+    private int CursorOpacity { get; set; }
+
+    private void StartCursorBlink()
+    {
+        _timer = new System.Timers.Timer();
+        _timer.Interval = 500;
+        _timer.Elapsed += OnBlinkCursor;
+        _timer.AutoReset = true;
+        _timer.Enabled = true;
+    }
+    private void OnBlinkCursor(Object? source, System.Timers.ElapsedEventArgs e)
+    {
+        CursorOpacity = CursorOpacity switch
+        {
+            100 => 0,
+            0 => 100,
+            _ => 0
+        };
+        InvokeAsync(StateHasChanged);
+    }
+    protected override Task OnInitializedAsync()
+    {
+        StartCursorBlink();
+        return base.OnInitializedAsync();
+    }
+
+    private void LineClick(int index)
+    {
+        _currentLine = index;
+    }
+
+    private void TypingHappened(KeyboardEventArgs e)
+    {
+        if (Block is null) return;
+
+        if (e.Key == "Enter")
+        {
+            BlockChanged.InvokeAsync(new LineAddedData(Block, _currentLine));
+            _currentLine++;
+            return;
+        }
+        BlockChanged.InvokeAsync(new LineChangedData(
+            Block,
+            _currentLine,
+            Block.Lines[_currentLine].Source + e.Key));
+    }
+
+    private void SpecialKey(KeyboardEventArgs e)
+    {
+        if (Block is null) return;
+        if (e.Key == "Backspace")
+        {
+            if (Block.Lines[_currentLine].Source.Any())
+            {
+                BlockChanged.InvokeAsync(new LineChangedData(
+                    Block,
+                    _currentLine,
+                    Block.Lines[_currentLine].Source[..^1]));
+            }
+            else if (_currentLine > 0)
+            {
+                BlockChanged.InvokeAsync(
+                    new LineRemovedData(Block, _currentLine));
+                _currentLine--;
+            }
+        }
+        if (e.Key == "ArrowUp")
+        {
+            if (_currentLine > 0)
+            {
+                _currentLine--;
+            }
+        }
+        if (e.Key == "ArrowDown")
+        {
+            if (_currentLine < (Block.Lines.Count - 1))
+            {
+                _currentLine++;
+            }
+        }
+    }
+}

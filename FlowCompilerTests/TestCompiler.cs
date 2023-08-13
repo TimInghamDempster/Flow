@@ -21,8 +21,8 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Should().BeOfType<ErrorLine>();
-            compiledLine.Line.Tokens.OfType<ErrorToken>().Should().Contain(e => e.Error.Contains("literal"));
+            compiledLine.Should().BeOfType<ErrorLine>();
+            compiledLine.Tokens.OfType<ErrorToken>().Should().Contain(e => e.Error.Contains("literal"));
         }
 
         [TestCategory(_expression)]
@@ -34,9 +34,9 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Should().BeOfType<ErrorLine>();
+            compiledLine.Should().BeOfType<ErrorLine>();
             
-            compiledLine.Line.Tokens.OfType<ErrorToken>().Should().Contain(e => e.Error.Contains("literal"));
+            compiledLine.Tokens.OfType<ErrorToken>().Should().Contain(e => e.Error.Contains("literal"));
         }
 
         [TestCategory(_expression)]
@@ -48,8 +48,8 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Should().BeOfType<GoodLine>();
-            compiledLine.Line.ToString().Should().Be(testLine);
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
         }
 
         [TestCategory(_expression)]
@@ -61,8 +61,8 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Should().BeOfType<ErrorLine>();
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Should().BeOfType<ErrorLine>();
+            compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("Unclosed string literal"));
         }
 
@@ -75,8 +75,8 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Should().BeOfType<GoodLine>();
-            compiledLine.Line.ToString().Should().Be(testLine);
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
         }
 
         [TestCategory(_expression)]
@@ -88,8 +88,8 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Should().BeOfType<GoodLine>();
-            compiledLine.Line.ToString().Should().Be(testLine);
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
         }
 
         [TestCategory(_expression)]
@@ -101,8 +101,8 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Should().BeOfType<GoodLine>();
-            compiledLine.Line.ToString().Should().Be(testLine);
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
         }
         [TestCategory(_expression)]
         [TestMethod]
@@ -113,8 +113,8 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Should().BeOfType<GoodLine>();
-            compiledLine.Line.ToString().Should().Be(testLine);
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
         }
 
         [TestCategory(_expression)]
@@ -126,8 +126,8 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Should().BeOfType<GoodLine>();
-            compiledLine.Line.ToString().Should().Be(testLine);
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
         }
 
         [TestCategory(_expression)]
@@ -139,7 +139,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("Value expected"));
         }
 
@@ -152,7 +152,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("Unclosed bracket"));
         }
 
@@ -165,7 +165,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("Value expected"));
         }
 
@@ -178,7 +178,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("Line too long"));
         }
 
@@ -191,7 +191,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("val must have a name."));
         }
 
@@ -204,7 +204,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("expression must have an assignment."));
         }
 
@@ -217,7 +217,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("""Line must start with "val" or "step"."""));
         }
 
@@ -231,7 +231,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("step must have a name"));
         }
 
@@ -244,7 +244,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("step can only have one name"));
         }
 
@@ -257,7 +257,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("step must have a name"));
         }
 
@@ -270,8 +270,8 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Should().BeOfType<GoodLine>();
-            compiledLine.Line.ToString().Should().Be(testLine);
+            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.ToString().Should().Be(testLine);
         }
 
         [TestCategory(_message)]
@@ -283,7 +283,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("message must have a name"));
         }
 
@@ -296,7 +296,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("test must have a name"));
         }
 
@@ -310,7 +310,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<Name>().
+            compiledLine.Tokens.OfType<Name>().
             Should().Contain(s => s.Value == testName);
         }
 
@@ -323,7 +323,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("test name must be valid"));
         }
 
@@ -336,7 +336,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Line.Tokens.OfType<ErrorToken>().
+            compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("test can only have one name"));
         }
     }

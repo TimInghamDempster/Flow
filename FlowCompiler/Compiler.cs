@@ -3,12 +3,46 @@ using System.Text;
 
 namespace FlowCompiler
 {
-    public record Test(IReadOnlyList<Message> Input, IReadOnlyList<Step> Code, IReadOnlyList<Message> Result);
-    public record Message();
-    public record Step();
-    public record CompiledLine(ILCode Code, ParsedLine Line);
+    public interface IProgram 
+    {
+        IEnumerable<CodeBlock> CodeBlocks { get; }
+    }
+    public record CodeBlock(IReadOnlyList<Line> Lines);
+    
+    public record ChangedLine(string newLine, int lineNumber);
+
+    public interface IProgramModified { }
+    public record LineChanged(IProgram Code, LineChangedData ChangedLine) : IProgramModified;
+    public record LineAdded(IProgram Code, LineAddedData LineAbove) : IProgramModified;
+    public record LineRemoved(IProgram Code, LineRemovedData LineNumber) : IProgramModified;
+
+    public interface IChangeData { }
+    public record LineAddedData(CodeBlock Block, int LineAbove) : IChangeData;
+    public record LineRemovedData(CodeBlock Block, int LineNumber) : IChangeData;
+    public record LineChangedData(CodeBlock Block, int LineNumber, string NewLine) : IChangeData;
+
+    public record Test(
+        IReadOnlyList<Message> Input,
+        IReadOnlyList<Step> Code,
+        IReadOnlyList<Message> Result) : IProgram
+    {
+        public IEnumerable<CodeBlock> CodeBlocks =>
+            ((IEnumerable<CodeBlock>)Input).Concat(Code).Concat(Result);
+    }
+
+    public record NoPCode() : IProgram
+    {
+        public IEnumerable<CodeBlock> CodeBlocks => 
+            Enumerable.Empty<CodeBlock>();
+    }
+
+    public record Line(string Source, ParsedLine ParsedLine, ILCode ILCode);
+
+    public record Message(IReadOnlyList<Line> Lines) : CodeBlock(Lines);
+    public record Step(IReadOnlyList<Line> Lines) : CodeBlock(Lines);
+
     public interface ILInstruction{}
-    public record SetVal(int value) : ILInstruction;
+    public record SetVal(int Value) : ILInstruction;
     public record EndFunc() : ILInstruction;
     public record ILCode(IReadOnlyList<ILInstruction> IL);
     public record ParsedLine(IReadOnlyList<Token> Tokens);
@@ -40,14 +74,86 @@ namespace FlowCompiler
 
     public interface ICompiler
     {
-        CompiledLine CompileLine(string line);
+        IProgram DefaultProgram();
 
-        void BuildDll(string exePath, CompiledLine genereatedCode);
+        IProgram ProgramChanged(IProgramModified change);
+
+        void BuildDll(string exePath, IEnumerable<ILCode> genereatedCode);
     }
 
     public class Compiler : ICompiler
     {
         private const int _maxLineLength = 80;
+        public IProgram DefaultProgram() =>
+            new Test(
+                new List<Message>()
+                {
+                    new Message(
+                    new List<Line>()
+                    {
+                        new Line("", new GoodLine(new List<Token>()), new ILCode(new List<ILInstruction>()))
+                    }) },
+                new List<Step>(),
+                new List<Message>());
+
+        public IProgram ProgramChanged(IProgramModified change)
+        {
+            return change switch
+            {
+                LineChanged lineChanged => ProgramChangedImpl(lineChanged.ChangedLine),
+                LineAdded lineAdded => ProgramChangedImpl(lineAdded.LineAbove),
+                LineRemoved lineRemoved => ProgramChangedImpl(lineRemoved.LineNumber),
+                _ => throw new NotImplementedException()
+            };
+        }
+
+        private IProgram ProgramChangedImpl (LineChangedData lineChanged)
+        {
+            var newLine = CompileLine(lineChanged.NewLine);
+
+            var lines = lineChanged.Block.Lines.ToList();
+            lines[lineChanged.LineNumber] = 
+                new(lineChanged.NewLine, newLine, lines[lineChanged.LineNumber].ILCode);
+
+            return new Test(
+                new List<Message>() { new Message(lines) },
+                new List<Step>(),
+                new List<Message>());
+
+        }
+
+        private IProgram ProgramChangedImpl(LineAddedData lineAdded)
+        { 
+            var lines = lineAdded.Block.Lines.ToList();
+            lines.Insert(
+                lineAdded.LineAbove + 1, 
+                new Line("", new GoodLine(new List<Token>()), new ILCode(new List<ILInstruction>())));
+
+            return new Test(
+                new List<Message>() { new Message(lines) },
+                new List<Step>(),
+                new List<Message>());
+        }
+
+        private IProgram ProgramChangedImpl(LineRemovedData lineRemoved)
+        {
+            var lines = lineRemoved.Block.Lines.ToList();
+            lines.RemoveAt(lineRemoved.LineNumber);
+
+            return new Test(
+                new List<Message>() { new Message(lines) },
+                new List<Step>(),
+                new List<Message>());
+        }
+
+        private Test BuildTest(List<ParsedLine> lines)
+        {
+            var input = new List<Message>();
+            var code = new List<Step>();
+            var result = new List<Message>();
+
+            return new Test(input, code, result);
+        }
 
         private string x64FromIL(ILCode iL)
         {
@@ -62,7 +168,7 @@ namespace FlowCompiler
             {
                 code.Append(instruction switch
                 {
-                    SetVal setVal => $"        mov    eax,  {setVal.value}\r\n",
+                    SetVal setVal => $"        mov    eax,  {setVal.Value}\r\n",
                     EndFunc endFunc => $"        ret\r\n",
                     _ => throw new NotImplementedException()
                 });
@@ -71,13 +177,11 @@ namespace FlowCompiler
             return code.ToString();
         }
 
-        public void BuildDll(string dllPath, CompiledLine generatedCode)
+        public void BuildDll(string dllPath, IEnumerable<ILCode> iLCode)
         {
-            if (generatedCode.Line is not GoodLine line) return;
-
             var dllName = Path.GetFileNameWithoutExtension(dllPath);
 
-            var code = x64FromIL(generatedCode.Code);
+            var code = x64FromIL(iLCode.First());
 
             var path = Path.Combine(Environment.CurrentDirectory, $"Content/{dllName}.asm");
             File.WriteAllText(path, code);
@@ -101,7 +205,7 @@ namespace FlowCompiler
             compiler.Close();
         }
 
-        public CompiledLine CompileLine(string line)
+        public ParsedLine CompileLine(string line)
         {
             return line switch
             {
@@ -110,12 +214,11 @@ namespace FlowCompiler
                 var s when s.StartsWith("message") => CompileMessage(s),
                 var s when s.StartsWith("test") => CompileTest(s),
                 _ => 
-                new (new(new List<ILInstruction>()),
-                    new ErrorLine(new List<Token> { new ErrorToken(0,0,line, """Line must start with "val" or "step".""") })                    )
+                new ErrorLine(new List<Token> { new ErrorToken(0,0,line, """Line must start with "val" or "step".""") })
             };
         }
 
-        private CompiledLine CompileTest(string test)
+        private ParsedLine CompileTest(string test)
         {
             var tokens = Tokenize(test, "test");
 
@@ -133,10 +236,10 @@ namespace FlowCompiler
                 tokens[1] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A test name must be valid");
             }
 
-            return new(new(new List<ILInstruction>()), TokensToLine(tokens));
+            return TokensToLine(tokens);
         }
 
-        private CompiledLine CompileMessage(string messageDef)
+        private ParsedLine CompileMessage(string messageDef)
         {
             var tokens = Tokenize(messageDef, "message");
 
@@ -153,7 +256,7 @@ namespace FlowCompiler
                 }
             }
 
-            return new(new(new List<ILInstruction>()), TokensToLine(tokens));
+            return TokensToLine(tokens);
         }
 
         private ILCode TestIL(GoodLine line)
@@ -165,7 +268,7 @@ namespace FlowCompiler
             });
         }
 
-        private CompiledLine CompileStep(string step)
+        private ParsedLine CompileStep(string step)
         {
             var tokens = Tokenize(step, "step");
 
@@ -189,12 +292,10 @@ namespace FlowCompiler
                 tokens[1] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A step must have a name");
             }
 
-            var line = TokensToLine(tokens);
-            return new(line is GoodLine goodLine ? TestIL(goodLine) :
-                new(new List<ILInstruction>()), line);
+            return TokensToLine(tokens);
         }
 
-        public CompiledLine CompileExpression(string expression)
+        public ParsedLine CompileExpression(string expression)
         {
             List<Token> tokens = Tokenize(expression, "val");
 
@@ -228,7 +329,7 @@ namespace FlowCompiler
             }
 
             CheckSyntax(tokens, 3);
-            return new(new(new List<ILInstruction>()), TokensToLine(tokens));
+            return TokensToLine(tokens);
         }
 
         private static ParsedLine TokensToLine(List<Token> tokens)

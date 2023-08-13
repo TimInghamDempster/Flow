@@ -1,19 +1,9 @@
 ﻿@using FlowCompiler
+@using static FlowUI.BlockEditor;
 
-@foreach(var line in CodeLines)
+@foreach(var block in _program.CodeBlocks)
 {
-    <div tabindex="0" onkeypress="@TypingHappened" onkeydown="@SpecialKey" onclick="@(() => LineClick(line.Index))">
-    
-        @foreach (var linePart in line.Parts)
-        {
-            @(linePart switch
-            {
-                LinePart lp => (@<span style="color:@lp.Colour" title="@lp.Tooltip">@lp.Text</span>),
-                Caret => (@<span style="opacity:@CursorOpacity">|</span>),
-                _ => (@<span />)
-            })
-        }
-    </div>
+    <BlockEditor Block="@block" BlockChanged="@OnBlockChanged"/>
 }
 
 <br />
@@ -24,154 +14,54 @@
 <br />
 
 @code {
-    private readonly List<CompiledLine> _lines = new() { new(new(new List<ILInstruction>()), new(new List<Token>())) };
-    private CompiledLine CurrentLine
-    {
-        get => _lines[_currentLine];
-        set => _lines[_currentLine] = value;
-    }
-
-    private interface ILinePart { };
-    private record LinePart(string Text, string Colour = "black", string Tooltip = "") : ILinePart;
-    private record Caret() : ILinePart;
-
-    private record Line(IEnumerable<ILinePart> Parts, int Index);
-
-    private int _currentLine = 0;
+    private IProgram _program = new Test(new List<Message>(), new List<Step>(), new List<Message>());
 
     [Inject]
     private ICompiler? Compiler { get; set; }
     [Inject]
     private IDebugger? Debugger { get; set; }
 
-    private Caret[] _caret = new[] { new Caret() };
-    private IEnumerable<Line> CodeLines =>
-    _lines.Select((l, i) =>
-     new Line(
-         new ILinePart[] { new LinePart("> ") }.Concat(
-        l.Line.Tokens.Select<Token, ILinePart>(t =>
-            t switch
-            {
-                Keyword => new LinePart(t.Value + " ", "cornflowerblue"),
-                Name => new LinePart(t.Value + " ", "gold"),
-                ErrorToken e => new LinePart(
-                    e.Value.Any() ? e.Value + " " : "_ ",
-                    "red",
-                    e.Error),
-                _ => new LinePart(t.Value)
-            }
-        )).Concat(
-            i == _currentLine ? 
-            _caret :
-            Enumerable.Empty<ILinePart>()) ??
-            _caret, i));
-
     [Parameter]
     public string EvaluatedResult { get; set; } = "Not run yet";
 
-    private string _code = "";
+    protected override void OnInitialized()
+    {
+        _program = Compiler?.DefaultProgram() ?? _program;
+    }
 
     [Parameter]
     public EventCallback ValueChanged { get; set; }
 
+    private Task OnBlockChanged(IChangeData change)
+    {
+        if (Compiler is null) return Task.CompletedTask;
+
+        _program = change switch
+        {
+            LineAddedData added => Compiler.ProgramChanged(
+                new LineAdded(_program, added)),
+            LineChangedData changed => Compiler.ProgramChanged(
+                new LineChanged(_program, changed)),
+            LineRemovedData removed => Compiler.ProgramChanged(
+                new LineRemoved(_program, removed)),
+            _ => _program
+        };
+
+        return Task.CompletedTask;
+    }
+
     private void RunProgram()
     {
-        // Can't actually happen, but injection and nullable
-        // references don't play nicely
-        if (CurrentLine is null) return;
-
         var dllPath = @"Content\test.dll";
-        Compiler?.BuildDll(dllPath, CurrentLine);
-        EvaluatedResult = Debugger?.LaunchApplication(dllPath).ToString() ?? "Error";
+
+        if(Compiler is null || Debugger is null || _program is not Test test) return;
+
+        var IL = test.Code.SelectMany(c => c.Lines.Select(l => l.ILCode));
+
+        Compiler.BuildDll(dllPath, IL);
+        EvaluatedResult = Debugger.LaunchApplication(dllPath).ToString() ?? "Error";
 
         ValueChanged.InvokeAsync();
     }
 
-    private System.Timers.Timer _timer = new();
-    private int CursorOpacity { get; set; }
-
-    private void StartCursorBlink()
-    {
-        _timer = new System.Timers.Timer();
-        _timer.Interval = 500;
-        _timer.Elapsed += OnBlinkCursor;
-        _timer.AutoReset = true;
-        _timer.Enabled = true;
-    }
-    private void OnBlinkCursor(Object? source, System.Timers.ElapsedEventArgs e)
-    {
-        CursorOpacity = CursorOpacity switch
-        {
-            100 => 0,
-            0 => 100,
-            _ => 0
-        };
-        InvokeAsync(StateHasChanged);
-    }
-    protected override Task OnInitializedAsync()
-    {
-        StartCursorBlink();
-        return base.OnInitializedAsync();
-    }
-
-    private void LineClick(int index)
-    {
-        ChangeLine(index);
-    }
-
-    private void ChangeLine(int index)
-    {
-        _currentLine = index;
-        _code = CurrentLine.Line.Tokens.Any() ?
-            CurrentLine.Line.Tokens.Select(t => t.Value).Aggregate((a, b) => a + " " + b) :
-            "";
-
-        if (Compiler is null) return;
-        CurrentLine = Compiler.CompileLine(_code);
-    }
-
-    private void TypingHappened(KeyboardEventArgs e)
-    {
-        if(e.Key == "Enter")
-        {
-            _lines.Add(new(new(new List<ILInstruction>()), new(new List<Token>())));
-            ChangeLine(_currentLine + 1);
-            return;
-        }
-        _code += e.Key;
-        if (Compiler is null) return;
-        CurrentLine = Compiler.CompileLine(_code);
-    }
-
-    private void SpecialKey(KeyboardEventArgs e)
-    {
-        if (e.Key == "Backspace")
-        {
-            if (_code.Any())
-            {
-                _code = _code.Remove(_code.Length - 1);
-                if (Compiler is null) return;
-                CurrentLine = Compiler.CompileLine(_code);
-            }
-            else if (_currentLine > 0)
-            {
-                _lines.RemoveAt(_currentLine);
-                ChangeLine(_currentLine - 1);
-            }
-        }
-        if(e.Key == "ArrowUp")
-        {
-            if (_currentLine > 0)
-            {
-                ChangeLine(_currentLine - 1);
-            }
-        }
-        if(e.Key == "ArrowDown")
-        {
-            if (_currentLine < _lines.Count - 1)
-            {
-                ChangeLine(_currentLine + 1);
-            }
-        }
-    }
 }
