@@ -71,6 +71,7 @@ namespace FlowCompiler
     public record Name(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
     public record Keyword(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
     public record StringLiteral(int StartIndex, int EndIndex, string Value) : Token(StartIndex,EndIndex, Value);
+    public record Emit(int start, int end) : Token(start, end, "emit");
 
     public interface ICompiler
     {
@@ -146,15 +147,6 @@ namespace FlowCompiler
                 new List<Message>());
         }
 
-        private Test BuildTest(List<ParsedLine> lines)
-        {
-            var input = new List<Message>();
-            var code = new List<Step>();
-            var result = new List<Message>();
-
-            return new Test(input, code, result);
-        }
-
         private string x64FromIL(ILCode iL)
         {
             var code = new StringBuilder($"global test_func\r\n" +
@@ -213,9 +205,30 @@ namespace FlowCompiler
                 var s when s.StartsWith("step") => CompileStep(s),
                 var s when s.StartsWith("message") => CompileMessage(s),
                 var s when s.StartsWith("test") => CompileTest(s),
+                var s when s.StartsWith("emit") => CompileEmit(s),
                 _ => 
                 new ErrorLine(new List<Token> { new ErrorToken(0,0,line, """Line must start with "val" or "step".""") })
             };
+        }
+
+        private ParsedLine CompileEmit(string value)
+        {
+            var tokens = Tokenize(value, "emit");
+
+            if (tokens.Count() < 2)
+            {
+                tokens.Add(new ErrorToken(1, 1, "", "An emit operation must have a value"));
+            }
+            if (tokens.Count() > 2)
+            {
+                for (int i = 0; i < tokens.Count(); i++)
+                {
+                    var token = tokens[i];
+                    tokens[i] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "emit operation can only have one value");
+                }
+            }
+
+            return TokensToLine(tokens);
         }
 
         private ParsedLine CompileTest(string test)
