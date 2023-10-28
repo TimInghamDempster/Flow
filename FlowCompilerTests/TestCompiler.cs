@@ -35,7 +35,7 @@ namespace FlowCompilerTests
             var compiledLine = compiler.CompileLine(testLine);
 
             compiledLine.Should().BeOfType<ErrorLine>();
-            
+
             compiledLine.Tokens.OfType<ErrorToken>().Should().Contain(e => e.Error.Contains("literal"));
         }
 
@@ -48,7 +48,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
         }
 
@@ -75,7 +75,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
         }
 
@@ -88,7 +88,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
         }
 
@@ -101,7 +101,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
         }
         [TestCategory(_expression)]
@@ -113,7 +113,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
         }
 
@@ -126,7 +126,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
         }
 
@@ -270,7 +270,7 @@ namespace FlowCompilerTests
 
             var compiledLine = compiler.CompileLine(testLine);
 
-            compiledLine.Should().BeOfType<GoodLine>();
+            compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
         }
 
@@ -314,7 +314,7 @@ namespace FlowCompilerTests
             Should().Contain(s => s.Value == testName);
         }
 
-        [TestCategory (_test)]
+        [TestCategory(_test)]
         [TestMethod]
         public void TestNameShouldBeLabel()
         {

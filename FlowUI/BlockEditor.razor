@@ -33,11 +33,12 @@
          new EditorLine(
              new ILinePart[] { new LinePart("> ") }.Concat(
             l.ParsedLine.Tokens.Select<Token, ILinePart>(t =>
-                t switch
+                (t, l.ParsedLine) switch
                 {
-                    Keyword => new LinePart(t.Value + " ", "cornflowerblue"),
-                    Name => new LinePart(t.Value + " ", "gold"),
-                    ErrorToken e => new LinePart(
+                    (Keyword, BlockStartLine) => new LinePart(t.Value + " ", "green"),
+                    (Keyword, _) => new LinePart(t.Value + " ", "cornflowerblue"),
+                    (Name, _) => new LinePart(t.Value + " ", "gold"),
+                    (ErrorToken e, _) => new LinePart(
                         e.Value.Any() ? e.Value + " " : "_ ",
                         "red",
                         e.Error),

@@ -46,14 +46,14 @@ namespace FlowCompiler
     public record EndFunc() : ILInstruction;
     public record ILCode(IReadOnlyList<ILInstruction> IL);
     public record ParsedLine(IReadOnlyList<Token> Tokens);
-    public record GoodLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens)
+    public record StatementLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens)
     {
         public override string ToString()
         {
             return string.Join(' ', Tokens.Select(t => t.Value));
         }
     }
-
+    public record BlockStartLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
     public record ErrorLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
 
 
@@ -92,7 +92,7 @@ namespace FlowCompiler
                     new Message(
                     new List<Line>()
                     {
-                        new Line("", new GoodLine(new List<Token>()), new ILCode(new List<ILInstruction>()))
+                        new Line("", new StatementLine(new List<Token>()), new ILCode(new List<ILInstruction>()))
                     }) },
                 new List<Step>(),
                 new List<Message>());
@@ -128,7 +128,7 @@ namespace FlowCompiler
             var lines = lineAdded.Block.Lines.ToList();
             lines.Insert(
                 lineAdded.LineAbove + 1, 
-                new Line("", new GoodLine(new List<Token>()), new ILCode(new List<ILInstruction>())));
+                new Line("", new StatementLine(new List<Token>()), new ILCode(new List<ILInstruction>())));
 
             return new Test(
                 new List<Message>() { new Message(lines) },
@@ -228,7 +228,7 @@ namespace FlowCompiler
                 }
             }
 
-            return TokensToLine(tokens);
+            return TokensToLine(tokens, new StatementLine(tokens));
         }
 
         private ParsedLine CompileTest(string test)
@@ -249,7 +249,7 @@ namespace FlowCompiler
                 tokens[1] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A test name must be valid");
             }
 
-            return TokensToLine(tokens);
+            return TokensToLine(tokens, new BlockStartLine(tokens));
         }
 
         private ParsedLine CompileMessage(string messageDef)
@@ -269,10 +269,10 @@ namespace FlowCompiler
                 }
             }
 
-            return TokensToLine(tokens);
+            return TokensToLine(tokens, new BlockStartLine(tokens));
         }
 
-        private ILCode TestIL(GoodLine line)
+        private ILCode TestIL(StatementLine line)
         {
             return new(new List<ILInstruction>
             {
@@ -305,7 +305,7 @@ namespace FlowCompiler
                 tokens[1] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A step must have a name");
             }
 
-            return TokensToLine(tokens);
+            return TokensToLine(tokens, new BlockStartLine(tokens));
         }
 
         public ParsedLine CompileExpression(string expression)
@@ -342,14 +342,14 @@ namespace FlowCompiler
             }
 
             CheckSyntax(tokens, 3);
-            return TokensToLine(tokens);
+            return TokensToLine(tokens, new StatementLine(tokens));
         }
 
-        private static ParsedLine TokensToLine(List<Token> tokens)
+        private static ParsedLine TokensToLine(List<Token> tokens, ParsedLine goodLine)
         {
             return tokens.OfType<ErrorToken>().Any() ?
                 new ErrorLine(tokens) :
-                new GoodLine(tokens);
+                goodLine;
         }
 
         private List<Token> Tokenize(string expression, string keyword)
