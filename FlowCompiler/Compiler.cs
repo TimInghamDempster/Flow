@@ -36,7 +36,7 @@ namespace FlowCompiler
             Enumerable.Empty<CodeBlock>();
     }
 
-    public record Line(string Source, ParsedLine ParsedLine, ILCode ILCode);
+    public record Line(string Source, ParsedLine ParsedLine);
 
     public record Message(IReadOnlyList<Line> Lines) : CodeBlock(Lines);
     public record Step(IReadOnlyList<Line> Lines) : CodeBlock(Lines);
@@ -53,6 +53,7 @@ namespace FlowCompiler
             return string.Join(' ', Tokens.Select(t => t.Value));
         }
     }
+    public record EmitLine(IReadOnlyList<Token> Tokens, ILCode IL) : ParsedLine(Tokens);
     public record BlockStartLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
     public record ErrorLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
 
@@ -92,7 +93,7 @@ namespace FlowCompiler
                     new Message(
                     new List<Line>()
                     {
-                        new Line("", new StatementLine(new List<Token>()), new ILCode(new List<ILInstruction>()))
+                        new Line("", new StatementLine(new List<Token>()))
                     }) },
                 new List<Step>(),
                 new List<Message>());
@@ -114,11 +115,11 @@ namespace FlowCompiler
 
             var lines = lineChanged.Block.Lines.ToList();
             lines[lineChanged.LineNumber] = 
-                new(lineChanged.NewLine, newLine, lines[lineChanged.LineNumber].ILCode);
+                new(lineChanged.NewLine, newLine);
 
             return new Test(
-                new List<Message>() { new Message(lines) },
-                new List<Step>(),
+                new List<Message>(),
+                new List<Step>() { new Step(lines) },
                 new List<Message>());
 
         }
@@ -128,11 +129,11 @@ namespace FlowCompiler
             var lines = lineAdded.Block.Lines.ToList();
             lines.Insert(
                 lineAdded.LineAbove + 1, 
-                new Line("", new StatementLine(new List<Token>()), new ILCode(new List<ILInstruction>())));
+                new Line("", new StatementLine(new List<Token>())));
 
             return new Test(
-                new List<Message>() { new Message(lines) },
-                new List<Step>(),
+                new List<Message>(),
+                new List<Step>() { new Step(lines) },
                 new List<Message>());
         }
 
@@ -142,8 +143,8 @@ namespace FlowCompiler
             lines.RemoveAt(lineRemoved.LineNumber);
 
             return new Test(
-                new List<Message>() { new Message(lines) },
-                new List<Step>(),
+                new List<Message>(),
+                new List<Step>() { new Step(lines) },
                 new List<Message>());
         }
 
@@ -228,7 +229,8 @@ namespace FlowCompiler
                 }
             }
 
-            return TokensToLine(tokens, new StatementLine(tokens));
+            var il = new ILCode(new List<ILInstruction> { new SetVal(5), new EndFunc() });
+            return TokensToLine(tokens, new EmitLine(tokens, il));
         }
 
         private ParsedLine CompileTest(string test)

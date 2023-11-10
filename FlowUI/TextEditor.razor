@@ -56,7 +56,11 @@
 
         if(Compiler is null || Debugger is null || _program is not Test test) return;
 
-        var IL = test.Code.SelectMany(c => c.Lines.Select(l => l.ILCode));
+        var IL = test.Code.
+        SelectMany(c => c.Lines).
+        Select(l => l.ParsedLine).
+        OfType<EmitLine>().
+        Select(l => l.IL);
 
         Compiler.BuildDll(dllPath, IL);
         EvaluatedResult = Debugger.LaunchApplication(dllPath).ToString() ?? "Error";
