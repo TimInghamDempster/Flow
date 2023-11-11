@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace FlowCompiler
 {
@@ -79,6 +81,8 @@ namespace FlowCompiler
         IProgram DefaultProgram();
 
         IProgram ProgramChanged(IProgramModified change);
+
+        void SaveProgram(IProgram program, string path);
 
         void BuildDll(string exePath, IEnumerable<ILCode> genereatedCode);
     }
@@ -168,6 +172,21 @@ namespace FlowCompiler
             }
 
             return code.ToString();
+        }
+
+        public void SaveProgram(IProgram program, string path)
+        {
+            var serializer = new SerializerBuilder()
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .Build();
+
+            var yaml = serializer.Serialize(
+                program.
+                CodeBlocks.
+                SelectMany(b => b.Lines).
+                Select(l => l.Source));
+            
+            File.WriteAllText(path, yaml);
         }
 
         public void BuildDll(string dllPath, IEnumerable<ILCode> iLCode)

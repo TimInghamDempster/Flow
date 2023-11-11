@@ -8,6 +8,7 @@
 
 <br />
 <button onclick="@this.RunProgram">Run</button>
+<button onclick="@this.SaveProgram">Save</button>
 <br />
 
 <div>Result: @EvaluatedResult</div>
@@ -50,6 +51,15 @@
         return Task.CompletedTask;
     }
 
+    private void SaveProgram()
+    {
+        var path = @"Content\test.flow";
+
+        if (Compiler is null) return;
+
+        Compiler.SaveProgram(_program, path);
+    }
+
     private void RunProgram()
     {
         var dllPath = @"Content\test.dll";
@@ -67,5 +77,4 @@
 
         ValueChanged.InvokeAsync();
     }
-
 }
