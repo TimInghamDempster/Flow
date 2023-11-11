@@ -5,18 +5,14 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace FlowCompiler
 {
-    public interface IProgram 
-    {
-        IEnumerable<CodeBlock> CodeBlocks { get; }
-    }
     public record CodeBlock(IReadOnlyList<Line> Lines);
     
     public record ChangedLine(string newLine, int lineNumber);
 
     public interface IProgramModified { }
-    public record LineChanged(IProgram Code, LineChangedData ChangedLine) : IProgramModified;
-    public record LineAdded(IProgram Code, LineAddedData LineAbove) : IProgramModified;
-    public record LineRemoved(IProgram Code, LineRemovedData LineNumber) : IProgramModified;
+    public record LineChanged(Test Code, LineChangedData ChangedLine) : IProgramModified;
+    public record LineAdded(Test Code, LineAddedData LineAbove) : IProgramModified;
+    public record LineRemoved(Test Code, LineRemovedData LineNumber) : IProgramModified;
 
     public interface IChangeData { }
     public record LineAddedData(CodeBlock Block, int LineAbove) : IChangeData;
@@ -24,9 +20,10 @@ namespace FlowCompiler
     public record LineChangedData(CodeBlock Block, int LineNumber, string NewLine) : IChangeData;
 
     public record Test(
+        string Name,
         IReadOnlyList<Message> Input,
         IReadOnlyList<Step> Code,
-        IReadOnlyList<Message> Result) : IProgram
+        IReadOnlyList<Message> Result)
     {
         public IEnumerable<CodeBlock> CodeBlocks =>
             ((IEnumerable<CodeBlock>)Input).Concat(Code).Concat(Result);
@@ -72,11 +69,11 @@ namespace FlowCompiler
 
     public interface ICompiler
     {
-        IProgram DefaultProgram();
+        Test DefaultProgram();
 
-        IProgram ProgramChanged(IProgramModified change);
+        Test ProgramChanged(IProgramModified change);
 
-        void SaveProgram(IProgram program, string path);
+        void SaveProgram(Test program, string path);
 
         void BuildDll(string exePath, IEnumerable<ILCode> genereatedCode);
     }
@@ -84,8 +81,9 @@ namespace FlowCompiler
     public class Compiler : ICompiler
     {
         private const int _maxLineLength = 80;
-        public IProgram DefaultProgram() =>
+        public Test DefaultProgram() =>
             new Test(
+                "DefualtTest",
                 new List<Message>()
                 {
                     new Message(
@@ -96,18 +94,18 @@ namespace FlowCompiler
                 new List<Step>(),
                 new List<Message>());
 
-        public IProgram ProgramChanged(IProgramModified change)
+        public Test ProgramChanged(IProgramModified change)
         {
             return change switch
             {
-                LineChanged lineChanged => ProgramChangedImpl(lineChanged.ChangedLine),
-                LineAdded lineAdded => ProgramChangedImpl(lineAdded.LineAbove),
-                LineRemoved lineRemoved => ProgramChangedImpl(lineRemoved.LineNumber),
+                LineChanged lineChanged => ProgramChangedImpl(lineChanged.ChangedLine, lineChanged.Code.Name),
+                LineAdded lineAdded => ProgramChangedImpl(lineAdded.LineAbove, lineAdded.Code.Name),
+                LineRemoved lineRemoved => ProgramChangedImpl(lineRemoved.LineNumber, lineRemoved.Code.Name),
                 _ => throw new NotImplementedException()
             };
         }
 
-        private IProgram ProgramChangedImpl (LineChangedData lineChanged)
+        private Test ProgramChangedImpl (LineChangedData lineChanged, string name)
         {
             var newLine = CompileLine(lineChanged.NewLine);
 
@@ -116,13 +114,14 @@ namespace FlowCompiler
                 new(lineChanged.NewLine, newLine);
 
             return new Test(
+                name,
                 new List<Message>(),
                 new List<Step>() { new Step(lines) },
                 new List<Message>());
 
         }
 
-        private IProgram ProgramChangedImpl(LineAddedData lineAdded)
+        private Test ProgramChangedImpl(LineAddedData lineAdded, string name)
         { 
             var lines = lineAdded.Block.Lines.ToList();
             lines.Insert(
@@ -130,17 +129,19 @@ namespace FlowCompiler
                 new Line("", new StatementLine(new List<Token>())));
 
             return new Test(
+                name,
                 new List<Message>(),
                 new List<Step>() { new Step(lines) },
                 new List<Message>());
         }
 
-        private IProgram ProgramChangedImpl(LineRemovedData lineRemoved)
+        private Test ProgramChangedImpl(LineRemovedData lineRemoved, string name)
         {
             var lines = lineRemoved.Block.Lines.ToList();
             lines.RemoveAt(lineRemoved.LineNumber);
 
             return new Test(
+                name,
                 new List<Message>(),
                 new List<Step>() { new Step(lines) },
                 new List<Message>());
@@ -168,7 +169,7 @@ namespace FlowCompiler
             return code.ToString();
         }
 
-        public void SaveProgram(IProgram program, string path)
+        public void SaveProgram(Test program, string path)
         {
             var serializer = new SerializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)

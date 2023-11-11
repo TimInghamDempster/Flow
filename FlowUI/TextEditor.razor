@@ -15,7 +15,7 @@
 <br />
 
 @code {
-    private IProgram _program = new Test(new List<Message>(), new List<Step>(), new List<Message>());
+    private Test _program = new Test("Uninitialized", new List<Message>(), new List<Step>(), new List<Message>());
 
     [Inject]
     private ICompiler? Compiler { get; set; }
