@@ -32,12 +32,6 @@ namespace FlowCompiler
             ((IEnumerable<CodeBlock>)Input).Concat(Code).Concat(Result);
     }
 
-    public record NoPCode() : IProgram
-    {
-        public IEnumerable<CodeBlock> CodeBlocks => 
-            Enumerable.Empty<CodeBlock>();
-    }
-
     public record Line(string Source, ParsedLine ParsedLine);
 
     public record Message(IReadOnlyList<Line> Lines) : CodeBlock(Lines);
@@ -74,7 +68,7 @@ namespace FlowCompiler
     public record Name(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
     public record Keyword(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
     public record StringLiteral(int StartIndex, int EndIndex, string Value) : Token(StartIndex,EndIndex, Value);
-    public record Emit(int start, int end) : Token(start, end, "emit");
+
 
     public interface ICompiler
     {
