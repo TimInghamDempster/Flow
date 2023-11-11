@@ -1,7 +1,7 @@
 ﻿@using FlowCompiler
 @using static FlowUI.BlockEditor;
 
-@foreach(var block in _program.CodeBlocks)
+@foreach(var block in _test.CodeBlocks)
 {
     <BlockEditor Block="@block" BlockChanged="@OnBlockChanged"/>
 }
@@ -15,7 +15,7 @@
 <br />
 
 @code {
-    private Test _program = new Test("Uninitialized", new List<Message>(), new List<Step>(), new List<Message>());
+    private Test _test = new Test("Uninitialized", new List<Message>(), new List<Step>(), new List<Message>());
 
     [Inject]
     private ICompiler? Compiler { get; set; }
@@ -27,7 +27,7 @@
 
     protected override void OnInitialized()
     {
-        _program = Compiler?.DefaultProgram() ?? _program;
+        _test = Compiler?.DefaultProgram() ?? _test;
     }
 
     [Parameter]
@@ -37,15 +37,15 @@
     {
         if (Compiler is null) return Task.CompletedTask;
 
-        _program = change switch
+        _test = change switch
         {
             LineAddedData added => Compiler.ProgramChanged(
-                new LineAdded(_program, added)),
+                new LineAdded(_test, added)),
             LineChangedData changed => Compiler.ProgramChanged(
-                new LineChanged(_program, changed)),
+                new LineChanged(_test, changed)),
             LineRemovedData removed => Compiler.ProgramChanged(
-                new LineRemoved(_program, removed)),
-            _ => _program
+                new LineRemoved(_test, removed)),
+            _ => _test
         };
 
         return Task.CompletedTask;
@@ -53,18 +53,18 @@
 
     private void SaveProgram()
     {
-        var path = @"Content\test.flow";
+        var path = $@"Content\{_test.Name}.flow";
 
         if (Compiler is null) return;
 
-        Compiler.SaveProgram(_program, path);
+        Compiler.SaveProgram(_test, path);
     }
 
     private void RunProgram()
     {
         var dllPath = @"Content\test.dll";
 
-        if(Compiler is null || Debugger is null || _program is not Test test) return;
+        if(Compiler is null || Debugger is null || _test is not Test test) return;
 
         var IL = test.Code.
         SelectMany(c => c.Lines).

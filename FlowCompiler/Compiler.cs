@@ -47,6 +47,7 @@ namespace FlowCompiler
         }
     }
     public record EmitLine(IReadOnlyList<Token> Tokens, ILCode IL) : ParsedLine(Tokens);
+    public record TestLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
     public record BlockStartLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens)
     {
         public override string ToString()
@@ -119,6 +120,8 @@ namespace FlowCompiler
             lines[lineChanged.LineNumber] = 
                 new(lineChanged.NewLine, newLine);
 
+            if(newLine is TestLine test) name = test.Tokens[1].Value;
+
             return new Test(
                 name,
                 new List<Message>(),
@@ -182,10 +185,7 @@ namespace FlowCompiler
                 .Build();
 
             var yaml = serializer.Serialize(
-                program.
-                CodeBlocks.
-                SelectMany(b => b.Lines).
-                Select(l => l.Source));
+                program);
             
             File.WriteAllText(path, yaml);
         }
@@ -276,7 +276,7 @@ namespace FlowCompiler
                 tokens[1] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A test name must be valid");
             }
 
-            return TokensToLine(tokens, new BlockStartLine(tokens));
+            return TokensToLine(tokens, new TestLine(tokens));
         }
 
         private ParsedLine CompileMessage(string messageDef)
@@ -297,15 +297,6 @@ namespace FlowCompiler
             }
 
             return TokensToLine(tokens, new BlockStartLine(tokens));
-        }
-
-        private ILCode TestIL(StatementLine line)
-        {
-            return new(new List<ILInstruction>
-            {
-                new SetVal(line.ToString().Length),
-                new EndFunc()
-            });
         }
 
         private ParsedLine CompileStep(string step)
