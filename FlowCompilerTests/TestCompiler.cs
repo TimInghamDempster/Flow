@@ -19,7 +19,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = one + two * ( three + 5 ) / 4 - - two";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Should().BeOfType<ErrorLine>();
             compiledLine.Tokens.OfType<ErrorToken>().Should().Contain(e => e.Error.Contains("literal"));
@@ -32,7 +32,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = one + \"three\"";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Should().BeOfType<ErrorLine>();
 
@@ -46,7 +46,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = 15";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
@@ -59,7 +59,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = \"";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Should().BeOfType<ErrorLine>();
             compiledLine.Tokens.OfType<ErrorToken>().
@@ -73,7 +73,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = \"fifteen\"";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
@@ -86,7 +86,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = 15.0";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
@@ -99,7 +99,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = 1.5f";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
@@ -111,7 +111,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = one + two * ( three + five ) / four - - two";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
@@ -124,7 +124,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = one + two * ( three + five )";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Should().BeOfType<StatementLine>();
             compiledLine.ToString().Should().Be(testLine);
@@ -137,7 +137,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = one + two * (three + five) / four - ";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("Value expected"));
@@ -150,7 +150,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = one + two * (three + five / four - two";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("Unclosed bracket"));
@@ -163,7 +163,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = one + 5 * (three + five / ) - two";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("Value expected"));
@@ -176,7 +176,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value = one + two * (three + five) / four - two + one + two * (three + five) / four - two + 1 + two * (three + five) / four - two + one + two * (three + five) / four - two";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("Line too long"));
@@ -189,7 +189,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val = one + two * (three + five) / four";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("val must have a name."));
@@ -202,7 +202,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "val value one + two * (three + five) / four";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
                 Should().Contain(e => e.Error.Contains("expression must have an assignment."));
@@ -215,7 +215,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "one + two * (three + five)";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("""Line must start with "val" or "step"."""));
@@ -229,7 +229,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "step";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("step must have a name"));
@@ -242,7 +242,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "step name another";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("step can only have one name"));
@@ -255,7 +255,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "step 12";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("step must have a name"));
@@ -268,9 +268,9 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "step SomeStep";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
-            compiledLine.Should().BeOfType<StatementLine>();
+            compiledLine.Should().BeOfType<BlockStartLine>();
             compiledLine.ToString().Should().Be(testLine);
         }
 
@@ -281,7 +281,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "message";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("message must have a name"));
@@ -294,7 +294,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "test";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("test must have a name"));
@@ -308,7 +308,7 @@ namespace FlowCompilerTests
             var testName = "someTest";
             var testLine = $"test {testName}";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<Name>().
             Should().Contain(s => s.Value == testName);
@@ -321,7 +321,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "test 123";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("test name must be valid"));
@@ -334,7 +334,7 @@ namespace FlowCompilerTests
             var compiler = new Compiler();
             var testLine = "test name another";
 
-            var compiledLine = compiler.CompileLine(testLine);
+            var compiledLine = compiler.CompileLine(testLine, 0);
 
             compiledLine.Tokens.OfType<ErrorToken>().
             Should().Contain(e => e.Error.Contains("test can only have one name"));

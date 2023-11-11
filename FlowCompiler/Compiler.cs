@@ -47,7 +47,13 @@ namespace FlowCompiler
         }
     }
     public record EmitLine(IReadOnlyList<Token> Tokens, ILCode IL) : ParsedLine(Tokens);
-    public record BlockStartLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
+    public record BlockStartLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens)
+    {
+        public override string ToString()
+        {
+            return string.Join(' ', Tokens.Select(t => t.Value));
+        }
+    }
     public record ErrorLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
 
 
@@ -107,7 +113,7 @@ namespace FlowCompiler
 
         private Test ProgramChangedImpl (LineChangedData lineChanged, string name)
         {
-            var newLine = CompileLine(lineChanged.NewLine);
+            var newLine = CompileLine(lineChanged.NewLine, lineChanged.LineNumber);
 
             var lines = lineChanged.Block.Lines.ToList();
             lines[lineChanged.LineNumber] = 
@@ -212,14 +218,14 @@ namespace FlowCompiler
             compiler.Close();
         }
 
-        public ParsedLine CompileLine(string line)
+        public ParsedLine CompileLine(string line, int lineNumber)
         {
             return line switch
             {
                 var s when s.StartsWith("val") => CompileExpression(s),
                 var s when s.StartsWith("step") => CompileStep(s),
                 var s when s.StartsWith("message") => CompileMessage(s),
-                var s when s.StartsWith("test") => CompileTest(s),
+                var s when s.StartsWith("test") => CompileTest(s, lineNumber),
                 var s when s.StartsWith("emit") => CompileEmit(s),
                 _ => 
                 new ErrorLine(new List<Token> { new ErrorToken(0,0,line, """Line must start with "val" or "step".""") })
@@ -247,9 +253,14 @@ namespace FlowCompiler
             return TokensToLine(tokens, new EmitLine(tokens, il));
         }
 
-        private ParsedLine CompileTest(string test)
+        private ParsedLine CompileTest(string test, int lineNumber)
         {
             var tokens = Tokenize(test, "test");
+
+            if (lineNumber != 0)
+            {
+                tokens.Add(new ErrorToken(1, 1, "", "Tests can only be declared on line 1"));
+            }
 
             if (tokens.Count() < 2)
             {
