@@ -1,4 +1,5 @@
-﻿<h3>TestBrowser</h3>
+﻿@using FlowCompiler;
+<h3>TestBrowser</h3>
 
 <div>
     <button @onclick="UpdateFileList">Refresh</button>
@@ -16,6 +17,9 @@
 
     private string _selectedFile = "";
 
+    [Inject]
+    private ICompiler? Compiler { get; set; }
+
     protected override void OnInitialized()
     {
         UpdateFileList();
@@ -27,6 +31,7 @@
     private void SelectTest(string file)
     {
         _selectedFile = file;
+        Compiler?.LoadProgram($"Content/{file}");
         StateHasChanged();
     }
 

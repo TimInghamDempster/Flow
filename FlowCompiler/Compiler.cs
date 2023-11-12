@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
+using System.Text.Json;
 
 namespace FlowCompiler
 {
@@ -83,6 +82,7 @@ namespace FlowCompiler
         void SaveProgram(Test program, string path);
 
         void BuildDll(string exePath, IEnumerable<ILCode> genereatedCode);
+        void LoadProgram(string path);
     }
 
     public class Compiler : ICompiler
@@ -180,14 +180,15 @@ namespace FlowCompiler
 
         public void SaveProgram(Test program, string path)
         {
-            var serializer = new SerializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .Build();
-
-            var yaml = serializer.Serialize(
-                program);
+            var json = JsonSerializer.Serialize(program);
             
-            File.WriteAllText(path, yaml);
+            File.WriteAllText(path, json);
+        }
+
+        public void LoadProgram(string path)
+        {
+            var json = File.ReadAllText(path);
+            var test = JsonSerializer.Deserialize<Test>(json);
         }
 
         public void BuildDll(string dllPath, IEnumerable<ILCode> iLCode)
