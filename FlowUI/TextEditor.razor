@@ -27,11 +27,33 @@
 
     protected override void OnInitialized()
     {
-        _test = Compiler?.DefaultProgram() ?? _test;
+        if (Compiler is null) return;
+
+        _test = Compiler.DefaultProgram();
+
+        Compiler.OnProgramLoaded += LoadProgram;
     }
 
     [Parameter]
     public EventCallback ValueChanged { get; set; }
+
+    private void LoadProgram(Test test)
+    {
+        _test = test;
+
+        for(int i = 0; i < _test.CodeBlocks.Count(); i++)
+        {
+            for(int j = 0; j < _test.CodeBlocks.ElementAt(i).Lines.Count(); j++)
+            {
+                _test = Compiler?.ProgramChanged(new LineChanged(_test,
+                    new LineChangedData(
+                        _test.CodeBlocks.ElementAt(i),
+                        j,
+                        _test.CodeBlocks.ElementAt(i).Lines.ElementAt(j).Source))) ?? _test;
+            }
+        }
+        StateHasChanged();
+    }
 
     private Task OnBlockChanged(IChangeData change)
     {

@@ -83,6 +83,7 @@ namespace FlowCompiler
 
         void BuildDll(string exePath, IEnumerable<ILCode> genereatedCode);
         void LoadProgram(string path);
+        event Action<Test>? OnProgramLoaded;
     }
 
     public class Compiler : ICompiler
@@ -189,7 +190,13 @@ namespace FlowCompiler
         {
             var json = File.ReadAllText(path);
             var test = JsonSerializer.Deserialize<Test>(json);
+
+            if (test is null) return;
+
+            OnProgramLoaded?.Invoke(test);
         }
+
+        public event Action<Test>? OnProgramLoaded;
 
         public void BuildDll(string dllPath, IEnumerable<ILCode> iLCode)
         {
