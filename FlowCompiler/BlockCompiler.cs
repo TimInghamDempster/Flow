@@ -1,12 +1,59 @@
 ﻿namespace FlowCompiler
 {
-    public record Block();
+    public record CodeBlock(IReadOnlyList<Line> Lines);
+    public record Line(string Source, ParsedLine ParsedLine);
+    public record Message(IReadOnlyList<Line> Lines) : CodeBlock(Lines);
+    public record Step(IReadOnlyList<Line> Lines) : CodeBlock(Lines);
+
+    public interface ILInstruction { }
+    public record SetVal(int Value) : ILInstruction;
+    public record EndFunc() : ILInstruction;
+    public record ILCode(IReadOnlyList<ILInstruction> IL);
+    public record ParsedLine(IReadOnlyList<Token> Tokens);
+    public record StatementLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens)
+    {
+        public override string ToString()
+        {
+            return string.Join(' ', Tokens.Select(t => t.Value));
+        }
+    }
+    public record EmitLine(IReadOnlyList<Token> Tokens, ILCode IL) : ParsedLine(Tokens);
+    public record TestLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
+    public record BlockStartLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens)
+    {
+        public override string ToString()
+        {
+            return string.Join(' ', Tokens.Select(t => t.Value));
+        }
+    }
+    public record ErrorLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
+
+
+    public record Token(int StartIndex, int EndIndex, string Value);
+    public record OpenPeren(int StartIndex, int EndIndex) : Token(StartIndex, EndIndex, "(");
+    public record ClosePeren(int StartIndex, int EndIndex) : Token(StartIndex, EndIndex, ")");
+    public record Space(int StartIndex, int EndIndex) : Token(StartIndex, EndIndex, " ");
+    public record Assignment(int StartIndex, int EndIndex) : Token(StartIndex, EndIndex, "=");
+    public record NumberToken(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
+    public record IntNum(int StartIndex, int EndIndex, string Value) : NumberToken(StartIndex, EndIndex, Value);
+    public record DoubleNum(int StartIndex, int EndIndex, string Value) : NumberToken(StartIndex, EndIndex, Value);
+    public record FloatNum(int StartIndex, int EndIndex, string Value) : NumberToken(StartIndex, EndIndex, Value);
+    public record Operator(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
+    public record ErrorToken(int StartIndex, int EndIndex, string Value, string Error) : Token(StartIndex, EndIndex, Value);
+    public record Name(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
+    public record Keyword(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
+    public record StringLiteral(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
 
     public class BlockCompiler
     {
-        public Block Compile(string code)
+        public CodeBlock Compile(string code)
         {
-            return new Block();
+            var lines = 
+                code.Split('\n').
+                Select(l => new Line(l, CompileLine(l))).
+                ToList();
+
+            return new CodeBlock(lines);
         }
 
         public ParsedLine CompileLine(string line)
