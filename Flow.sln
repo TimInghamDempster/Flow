@@ -16,6 +16,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowCompilerTests", "FlowCo
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Runtime", "Runtime\Runtime.vcxproj", "{741BF51C-02A3-41BB-84CB-B3E56769C38F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RuntimeTests", "RuntimeTests\RuntimeTests.csproj", "{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,6 +88,18 @@ Global
 		{741BF51C-02A3-41BB-84CB-B3E56769C38F}.Release|x64.Build.0 = Release|x64
 		{741BF51C-02A3-41BB-84CB-B3E56769C38F}.Release|x86.ActiveCfg = Release|Win32
 		{741BF51C-02A3-41BB-84CB-B3E56769C38F}.Release|x86.Build.0 = Release|Win32
+		{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}.Debug|x64.Build.0 = Debug|Any CPU
+		{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}.Debug|x86.Build.0 = Debug|Any CPU
+		{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}.Release|x64.ActiveCfg = Release|Any CPU
+		{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}.Release|x64.Build.0 = Release|Any CPU
+		{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}.Release|x86.ActiveCfg = Release|Any CPU
+		{A56EBA82-9DA0-4D46-956F-AD4ACF9F8228}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

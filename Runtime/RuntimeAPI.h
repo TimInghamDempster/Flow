@@ -6,4 +6,4 @@
 #define RUNTIME_API __declspec(dllimport)
 #endif
 
-extern "C" RUNTIME_API void Evaluate(int* res);
+extern "C" RUNTIME_API int Evaluate(const int input[], const int programSize);
