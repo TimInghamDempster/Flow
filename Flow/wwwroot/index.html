@@ -20,6 +20,18 @@
         <a class="dismiss">🗙</a>
     </div>
     <script src="_framework/blazor.webview.js"></script>
+    <script>
+        function getCode(targetId) {
+            var code = "";
+            var contenteditable = document.getElementById(targetId);
+            var text = contenteditable.textContent;
+            return text;
+        }
+        function setCode(targetId, content) {
+            var contenteditable = document.getElementById(targetId);
+            contenteditable.innerHTML = content;
+        }
+    </script>
 </body>
 
 </html>

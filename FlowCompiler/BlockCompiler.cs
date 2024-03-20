@@ -44,7 +44,12 @@
     public record Keyword(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
     public record StringLiteral(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
 
-    public class BlockCompiler
+    public interface IBlockCompiler
+    {
+        CodeBlock Compile(string code);
+    }
+
+    public class BlockCompiler : IBlockCompiler
     {
         public CodeBlock Compile(string code)
         {

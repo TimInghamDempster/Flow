@@ -17,6 +17,7 @@ namespace Flow
             serviceCollection.AddWpfBlazorWebView();
             serviceCollection.AddSingleton<ICompiler, Compiler>();
             serviceCollection.AddSingleton<IDebugger, Debugger>();
+            serviceCollection.AddSingleton<IBlockCompiler, BlockCompiler>();
             Resources.Add("services", serviceCollection.BuildServiceProvider());
         }
     }

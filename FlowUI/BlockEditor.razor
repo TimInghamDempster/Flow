@@ -1,7 +1,24 @@
 ﻿@using FlowCompiler;
+@using Microsoft.AspNetCore.Components.Forms;
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime;
+
+<div contenteditable="true" id="testDiv" tabindex="0" onblur="@TypingHappened">
+    @foreach (var line in CodeLines)
+    {
+        @foreach (var linePart in line.Parts.OfType<LinePart>())
+        {
+            <span style="color:@linePart.Colour" title="@linePart.Tooltip">@linePart.Text</span>
+        }
+        <br/>
+    }
+</div>
+
+@*
 @foreach (var line in CodeLines)
 {
-    <div tabindex="0" onkeypress="@TypingHappened" onkeydown="@SpecialKey" onclick="@(() => LineClick(line.Index))">
+
+    <div tabindex="1" onkeypress="@TypingHappened" onkeydown="@SpecialKey" onclick="@(() => LineClick(line.Index))">
 
         @foreach (var linePart in line.Parts)
         {
@@ -13,26 +30,32 @@
             })
         }
     </div>
-}
+}*@
 
 @code {
     [Parameter]
     public CodeBlock? Block { get; set; }
     [Parameter]
-    public EventCallback<IChangeData> BlockChanged { get; set; }
+    public EventCallback<CodeChanged> BlockChanged { get; set; }
 
-    private interface ILinePart { };
-    private record LinePart(string Text, string Colour = "black", string Tooltip = "") : ILinePart;
-    private record Caret() : ILinePart;
-    private record EditorLine(IEnumerable<ILinePart> Parts, int Index);
-    private Caret[] _caret = new[] { new Caret() };
-    private int _currentLine = 0;
+    public record CodeChanged(string NewCode)
+    {
+        public CodeBlock? NewBlock { get; set; }
+    }
+
+    private record LinePart(string Text, string Colour = "black", string Tooltip = "");
+    private record EditorLine(IEnumerable<LinePart> Parts, int Index);
+
+    private string Code =>
+        CodeLines.Select(l => l.Parts.Select(p =>
+           $"<span style=\"color:{p.Colour}\" title= \"{p.Tooltip}\" >{p.Text} </ span >").
+           Aggregate((a, b) => a + b)).
+        Aggregate((a, b) => a + "<br/>" + b);
 
     private IEnumerable<EditorLine> CodeLines =>
         Block?.Lines.Select((l, i) =>
          new EditorLine(
-             new ILinePart[] { new LinePart("> ") }.Concat(
-            l.ParsedLine.Tokens.Select<Token, ILinePart>(t =>
+            l.ParsedLine.Tokens.Select<Token, LinePart>(t =>
                 (t, l.ParsedLine) switch
                 {
                     (Keyword, BlockStartLine) => new LinePart(t.Value + " ", "green"),
@@ -43,94 +66,24 @@
                         "red",
                         e.Error),
                     _ => new LinePart(t.Value)
-                }
-            )).Concat(
-                i == _currentLine ?
-                _caret :
-                Enumerable.Empty<ILinePart>()) ??
-                _caret, i)) ?? Enumerable.Empty<EditorLine>();
+                }), i)) ?? Enumerable.Empty<EditorLine>();
 
-
-    private System.Timers.Timer _timer = new();
-    private int CursorOpacity { get; set; }
-
-    private void StartCursorBlink()
+    private async void TypingHappened(FocusEventArgs e)
     {
-        _timer = new System.Timers.Timer();
-        _timer.Interval = 500;
-        _timer.Elapsed += OnBlinkCursor;
-        _timer.AutoReset = true;
-        _timer.Enabled = true;
-    }
-    private void OnBlinkCursor(Object? source, System.Timers.ElapsedEventArgs e)
-    {
-        CursorOpacity = CursorOpacity switch
-        {
-            100 => 0,
-            0 => 100,
-            _ => 0
-        };
-        InvokeAsync(StateHasChanged);
-    }
-    protected override Task OnInitializedAsync()
-    {
-        StartCursorBlink();
-        return base.OnInitializedAsync();
-    }
-
-    private void LineClick(int index)
-    {
-        _currentLine = index;
-    }
-
-    private void TypingHappened(KeyboardEventArgs e)
-    {
+        var code = await JSRuntime.InvokeAsync<string>("getCode", "testDiv");
         if (Block is null) return;
 
-        if (e.Key == "Enter")
-        {
-            BlockChanged.InvokeAsync(new LineAddedData(Block, _currentLine));
-            _currentLine++;
-            return;
-        }
-        BlockChanged.InvokeAsync(new LineChangedData(
-            Block,
-            _currentLine,
-            Block.Lines[_currentLine].Source + e.Key));
-    }
+        var changed = new CodeChanged(code);
 
-    private void SpecialKey(KeyboardEventArgs e)
-    {
-        if (Block is null) return;
-        if (e.Key == "Backspace")
+        await BlockChanged.InvokeAsync(changed);
+
+        if (changed.NewBlock is not null)
         {
-            if (Block.Lines[_currentLine].Source.Any())
-            {
-                BlockChanged.InvokeAsync(new LineChangedData(
-                    Block,
-                    _currentLine,
-                    Block.Lines[_currentLine].Source[..^1]));
-            }
-            else if (_currentLine > 0)
-            {
-                BlockChanged.InvokeAsync(
-                    new LineRemovedData(Block, _currentLine));
-                _currentLine--;
-            }
+            Block = changed.NewBlock;
+            var codeText = Code;
+            await JSRuntime.InvokeVoidAsync("setCode", "testDiv", Code);
         }
-        if (e.Key == "ArrowUp")
-        {
-            if (_currentLine > 0)
-            {
-                _currentLine--;
-            }
-        }
-        if (e.Key == "ArrowDown")
-        {
-            if (_currentLine < (Block.Lines.Count - 1))
-            {
-                _currentLine++;
-            }
-        }
+
+        //StateHasChanged();
     }
 }

@@ -4,7 +4,7 @@ using FluentAssertions;
 namespace FlowCompilerTests
 {
     [TestClass]
-    public class TestBlockCompiler
+    public class BlockCompilerTests
     {
         private const string _expression = "Expression";
         private const string _step = "Step";

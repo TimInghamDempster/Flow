@@ -41,34 +41,27 @@
     {
         _test = test;
 
-        for(int i = 0; i < _test.CodeBlocks.Count(); i++)
-        {
-            for(int j = 0; j < _test.CodeBlocks.ElementAt(i).Lines.Count(); j++)
+        /*for(int i = 0; i < _test.CodeBlocks.Count(); i++)
             {
+            for(int j = 0; j < _test.CodeBlocks.ElementAt(i).Lines.Count(); j++)
+                {
                 _test = Compiler?.ProgramChanged(new LineChanged(_test,
-                    new LineChangedData(
+                        new LineChangedData(
                         _test.CodeBlocks.ElementAt(i),
                         j,
                         _test.CodeBlocks.ElementAt(i).Lines.ElementAt(j).Source))) ?? _test;
-            }
         }
+        }*/
         StateHasChanged();
     }
 
-    private Task OnBlockChanged(IChangeData change)
+    private Task OnBlockChanged(BlockEditor.CodeChanged change)
     {
         if (Compiler is null) return Task.CompletedTask;
 
-        _test = change switch
-        {
-            LineAddedData added => Compiler.ProgramChanged(
-                new LineAdded(_test, added)),
-            LineChangedData changed => Compiler.ProgramChanged(
-                new LineChanged(_test, changed)),
-            LineRemovedData removed => Compiler.ProgramChanged(
-                new LineRemoved(_test, removed)),
-            _ => _test
-        };
+        _test = Compiler.ProgramChanged(new BlockChanged(_test, 0, change.NewCode));
+
+        change.NewBlock = _test.CodeBlocks.ElementAt(0);
 
         return Task.CompletedTask;
     }

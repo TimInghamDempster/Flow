@@ -4,19 +4,10 @@ using System.Text.Json;
 
 namespace FlowCompiler
 {
-    public interface IProgramModified { }
-    public record LineChanged(Test Code, LineChangedData ChangedLine) : IProgramModified;
-    public record LineAdded(Test Code, LineAddedData LineAbove) : IProgramModified;
-    public record LineRemoved(Test Code, LineRemovedData LineNumber) : IProgramModified;
-
-    public interface IChangeData { }
-    public record LineAddedData(CodeBlock Block, int LineAbove) : IChangeData;
-    public record LineRemovedData(CodeBlock Block, int LineNumber) : IChangeData;
-    public record LineChangedData(CodeBlock Block, int LineNumber, string NewLine) : IChangeData;
-
+    public record BlockChanged(Test test, int BlockIndex, string NewCode);
     public record Test(
         string Name,
-        IReadOnlyList<Message> Input,
+        IReadOnlyList<CodeBlock> Input,
         IReadOnlyList<Step> Code,
         IReadOnlyList<Message> Result)
     {
@@ -28,7 +19,7 @@ namespace FlowCompiler
     {
         Test DefaultProgram();
 
-        Test ProgramChanged(IProgramModified change);
+        Test ProgramChanged(BlockChanged change);
 
         void SaveProgram(Test program, string path);
 
@@ -39,7 +30,12 @@ namespace FlowCompiler
 
     public class Compiler : ICompiler
     {
-        private readonly BlockCompiler _blockCompiler = new();
+        private readonly IBlockCompiler _blockCompiler;
+
+        public Compiler(IBlockCompiler blockCompiler)
+        {
+            _blockCompiler = blockCompiler;
+        }
 
         public Test DefaultProgram() =>
             new Test(
@@ -54,59 +50,19 @@ namespace FlowCompiler
                 new List<Step>(),
                 new List<Message>());
 
-        public Test ProgramChanged(IProgramModified change)
+        public Test ProgramChanged(BlockChanged change)
         {
-            return change switch
-            {
-                LineChanged lineChanged => ProgramChangedImpl(lineChanged.ChangedLine, lineChanged.Code.Name),
-                LineAdded lineAdded => ProgramChangedImpl(lineAdded.LineAbove, lineAdded.Code.Name),
-                LineRemoved lineRemoved => ProgramChangedImpl(lineRemoved.LineNumber, lineRemoved.Code.Name),
-                _ => throw new NotImplementedException()
-            };
-        }
+            var newBlock = _blockCompiler.Compile(change.NewCode);
 
-        private Test ProgramChangedImpl(LineChangedData lineChanged, string name)
-        {
-            var newLine = _blockCompiler.CompileLine(lineChanged.NewLine);
-
-            var lines = lineChanged.Block.Lines.ToList();
-            lines[lineChanged.LineNumber] =
-                new(lineChanged.NewLine, newLine);
-
-            if (newLine is TestLine test) name = test.Tokens[1].Value;
+            var blocks = change.test.CodeBlocks.ToList();
+            blocks[change.BlockIndex] = newBlock;
 
             return new Test(
-                name,
-                new List<Message>(),
-                new List<Step>() { new Step(lines) },
-                new List<Message>());
-
-        }
-
-        private Test ProgramChangedImpl(LineAddedData lineAdded, string name)
-        {
-            var lines = lineAdded.Block.Lines.ToList();
-            lines.Insert(
-                lineAdded.LineAbove + 1,
-                new Line("", new StatementLine(new List<Token>())));
-
-            return new Test(
-                name,
-                new List<Message>(),
-                new List<Step>() { new Step(lines) },
-                new List<Message>());
-        }
-
-        private Test ProgramChangedImpl(LineRemovedData lineRemoved, string name)
-        {
-            var lines = lineRemoved.Block.Lines.ToList();
-            lines.RemoveAt(lineRemoved.LineNumber);
-
-            return new Test(
-                name,
-                new List<Message>(),
-                new List<Step>() { new Step(lines) },
-                new List<Message>());
+                change.test.Name,
+                //change.test.Input,
+                blocks,
+                blocks.OfType<Step>().ToList(),
+                change.test.Result);
         }
 
         private string x64FromIL(ILCode iL)
@@ -177,6 +133,5 @@ namespace FlowCompiler
             compiler.WaitForExit();
             compiler.Close();
         }
-
     }
 }
