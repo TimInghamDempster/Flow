@@ -7,7 +7,7 @@ namespace RuntimeTests
     {
 
         [DllImport("..\\..\\..\\..\\Flow\\bin\\Debug\\net7.0-windows\\Runtime", CharSet = CharSet.Unicode, SetLastError = true)]
-        private static extern int Evaluate(int[] input, int programSize);
+        private static extern int Evaluate(byte[] input, int programSize);
     
         [SetUp]
         public void Setup()
@@ -17,7 +17,7 @@ namespace RuntimeTests
         [Test]
         public void EvaluatesProgram()
         {
-            var success = new[] { 7, 5, 42 };
+            var success = new byte[] { 7, 5, 42 };
 
             var res = Evaluate(success, success.Length);
 

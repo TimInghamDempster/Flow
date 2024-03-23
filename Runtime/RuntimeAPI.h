@@ -6,4 +6,15 @@
 #define RUNTIME_API __declspec(dllimport)
 #endif
 
-extern "C" RUNTIME_API int Evaluate(const int input[], const int programSize);
+extern "C" RUNTIME_API int Evaluate(const char input[], const int programSize);
+
+enum class OpCode
+{
+	Add,
+	Subtract,
+	Multiply,
+	Divide,
+	Modulo,
+	Set,
+	Copy,
+};
