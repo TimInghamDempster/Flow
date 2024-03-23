@@ -15,6 +15,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NetOpCodeGenerator\NetOpCodeGenerator.csproj" 
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false"/>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Content\coreclr.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
