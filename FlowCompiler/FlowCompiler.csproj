@@ -15,9 +15,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NetOpCodeGenerator\NetOpCodeGenerator.csproj" 
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false"/>
+    <AdditionalFiles Include="..\Runtime\RuntimeAPI.h" Link="RuntimeAPI.h" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NetOpCodeGenerator\NetOpCodeGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
