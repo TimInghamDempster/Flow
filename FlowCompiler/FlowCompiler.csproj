@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="..\Runtime\RuntimeAPI.h" Link="RuntimeAPI.h" />
+    <AdditionalFiles Include="..\Runtime\Instructions.h" Link="Instructions.h" />
   </ItemGroup>
 
   <ItemGroup>
