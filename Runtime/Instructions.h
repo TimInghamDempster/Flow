@@ -9,6 +9,7 @@ enum class OpCode
 	Divide,
 	Modulo,
 	Copy,
+	Stop,
 };
 
 struct Instruction
@@ -25,11 +26,14 @@ union Args
 		int destination;
 		int source1;
 		int source2;
-	} addArgs;
+	} AddArgs;
 	struct SubtractArgs
 	{
 		int destination;
 		int source1;
 		int source2;
-	} subtractArgs;
+	} SubtractArgs;
+	struct StopArgs
+	{
+	} StopArgs;
 };

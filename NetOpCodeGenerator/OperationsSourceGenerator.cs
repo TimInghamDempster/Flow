@@ -63,12 +63,12 @@ namespace FlowCompiler
                     b.ToArgName(),
                     b.ToArgList()));
 
-            var argsList = (IEnumerable<Arg> al) => al
-            .Select(a => $"{a.Name} {a.Type}")
-            .Aggregate((a, b) => $"{a}, {b}");
+            var argsList = (IEnumerable<Arg> al) => al.Any() ?
+            ", " + al.Select(a => $"{a.Name} {a.Type}")
+            .Aggregate((a, b) => $"{a}, {b}") : string.Empty;
 
             return blocks
-            .Select(l => $"internal record {l.Name}(UInt32 VectorSize, {argsList(l.Args)}) : Instruction(OpCodes.{l.Name}, VectorSize);");
+            .Select(l => $"internal record {l.Name}(UInt32 VectorSize{argsList(l.Args)}) : Instruction(OpCodes.{l.Name}, VectorSize);");
         }
 
         public static string Remove(this string str, params string[] toRemove)
