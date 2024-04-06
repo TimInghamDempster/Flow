@@ -68,7 +68,7 @@ namespace FlowCompiler
             .Aggregate((a, b) => $"{a}, {b}");
 
             return blocks
-            .Select(l => $"internal record {l.Name}({argsList(l.Args)}) : Instruction(OpCodes.{l.Name});");
+            .Select(l => $"internal record {l.Name}(UInt32 VectorSize, {argsList(l.Args)}) : Instruction(OpCodes.{l.Name}, VectorSize);");
         }
 
         public static string Remove(this string str, params string[] toRemove)

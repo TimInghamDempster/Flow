@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 
 enum class OpCode
 {
@@ -7,7 +8,6 @@ enum class OpCode
 	Multiply,
 	Divide,
 	Modulo,
-	Set,
 	Copy,
 };
 
@@ -15,6 +15,7 @@ struct Instruction
 {
 	OpCode opCode;
 	Args args;
+	uint32_t vectorSize;
 };
 
 union Args
@@ -31,9 +32,4 @@ union Args
 		int source1;
 		int source2;
 	} subtractArgs;
-	struct SetArgs
-	{
-		int destination;
-		int value;
-	} setArgs;
 };

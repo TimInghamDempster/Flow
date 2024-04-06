@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FlowCompiler
+﻿namespace FlowCompiler
 {
-    internal record Instruction(OpCodes OpCode);
+    internal record Instruction(OpCodes OpCode,  UInt32 VectorSize);
 }
