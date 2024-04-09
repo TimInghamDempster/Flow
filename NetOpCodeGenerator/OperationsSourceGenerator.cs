@@ -64,11 +64,29 @@ namespace FlowCompiler
                     b.ToArgList()));
 
             var argsList = (IEnumerable<Arg> al) => al.Any() ?
-            ", " + al.Select(a => $"{a.Name} {a.Type}")
+            ", " + al.Select(a => $"{a.Type} {a.Name}")
             .Aggregate((a, b) => $"{a}, {b}") : string.Empty;
 
+            var elementList = (IEnumerable<Arg> al) =>
+            al.Select(a => $"\t\t\t\tyield return new DataElement<{a.Type}>({a.Name});")
+            .Aggregate((a,b) => $"{a}{Environment.NewLine}{b}");
+
+            var elementProp = (IEnumerable<Arg> al) => al.Any() ?
+$"\t\tinternal override IEnumerable<IDataElement> ArgumentData{Environment.NewLine}" +
+$"\t\t{{{Environment.NewLine}" +
+$"\t\t\tget{Environment.NewLine}" +
+$"\t\t\t{{{Environment.NewLine}" +
+elementList(al) + Environment.NewLine +
+$"\t\t\t}} {Environment.NewLine}" +
+$"\t\t}} {Environment.NewLine}" :
+$"\t\tinternal override IEnumerable<IDataElement> ArgumentData => Enumerable.Empty<IDataElement>();{Environment.NewLine}";
+
             return blocks
-            .Select(l => $"internal record {l.Name}(UInt32 VectorSize{argsList(l.Args)}) : Instruction(OpCodes.{l.Name}, VectorSize);");
+            .Select(l =>
+$"internal record {l.Name}(UInt32 VectorSize{argsList(l.Args)}) : Instruction(OpCodes.{l.Name}, VectorSize){Environment.NewLine}" +
+$"\t{{{Environment.NewLine}" +
+elementProp(l.Args) +
+$"\t}}{Environment.NewLine}");
         }
 
         public static string Remove(this string str, params string[] toRemove)
@@ -86,8 +104,8 @@ namespace FlowCompiler
 
         private static Arg ToArg(this string arg) =>
             arg.Split(' ').Map(l => new Arg(
-                        l[0].Remove("\t", " "),
-                        (l[1][0].ToString().ToUpper() + l[1].Substring(1)).Replace(";", "")));
+                        (l[1][0].ToString().ToUpper() + l[1].Substring(1)).Replace(";", ""),
+                        l[0].Remove("\t", " ")));
         private static string ToArgName(this IEnumerable<string> block) =>
             block.First().Remove("struct", "Args", "\t", " ");
 
