@@ -22,7 +22,7 @@ namespace NetOpCodeGenerator
             var enumValues = enumLines.Aggregate((a, b) => $"{a}{Environment.NewLine}\t{b}");
 
             var argTypes = lines
-                .ExtractBlock(l => !l.Contains("union Args"))
+                .ExtractBlock(l => !l.Contains("union Arguments"))
                 .CreateArgsRecord()
                 .Aggregate((a,b) => $"{a}{Environment.NewLine}\t{b}");
 

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RuntimeTests": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

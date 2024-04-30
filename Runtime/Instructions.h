@@ -12,14 +12,7 @@ enum class OpCode
 	Stop,
 };
 
-struct Instruction
-{
-	OpCode opCode;
-	Args args;
-	uint32_t vectorSize;
-};
-
-union Args
+union Arguments
 {
 	struct AddArgs
 	{
@@ -36,4 +29,11 @@ union Args
 	struct StopArgs
 	{
 	} StopArgs;
+};
+
+struct Instruction
+{
+	OpCode opCode;
+	uint32_t vectorSize;
+	Arguments args;
 };
