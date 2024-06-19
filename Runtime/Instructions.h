@@ -28,6 +28,9 @@ union Arguments
 	} SubtractArgs;
 	struct StopArgs
 	{
+		int dummy;
+		int dummy2;
+		int dummy3;
 	} StopArgs;
 };
 

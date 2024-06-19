@@ -2,6 +2,9 @@
 
 #include <windows.h>
 #include "Instructions.h"
+#include <thread>
+#include <vector>
+#include <stdexcept>
 
 void Execute(void* memory, const int programSize, const int processorCount);
 
@@ -20,11 +23,30 @@ int* Evaluate(const char input[], const int programSize, const int processorCoun
 
 void ExecuteAdd(void* memory, Arguments args, int vectorOffset);
 void ExecuteSubtract(void* memory, Arguments args, int vectorOffset);
+void ExecuteThread(void* memory, const int programSize, const int initialInstructionPointer);
 
 void Execute(void* memory, const int programSize, const int processorCount)
 {
-	auto instruction = (Instruction*)(memory);
-	int instructionPointer = 0;
+	std::vector<std::thread> threads;
+	auto intmem = (int*)memory;
+
+	for (int i = 0; i < processorCount; i++)
+	{
+		auto startIndex = programSize / 4 - processorCount + i;
+		auto ip = intmem[startIndex];
+		threads.push_back(std::thread(ExecuteThread, memory, programSize, ip));
+	}
+
+	for (int i = 0; i < processorCount; i++)
+	{
+		threads[i].join();
+	}
+}
+
+void ExecuteThread(void* memory, const int programSize, const int initialInstructionPointer)
+{
+	int instructionPointer = initialInstructionPointer;
+	auto instruction = (Instruction*)((char*)memory + instructionPointer * sizeof(Instruction));
 
 	while (instruction->opCode != OpCode::Stop)
 	{
@@ -39,7 +61,7 @@ void Execute(void* memory, const int programSize, const int processorCount)
 				ExecuteSubtract(memory, instruction->args, i);
 				break;
 			default:
-				break;
+				throw std::invalid_argument("Invalid opcode");
 			}
 		}
 
