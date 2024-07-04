@@ -7,7 +7,7 @@ namespace RuntimeTests
     public class Tests
     {
 
-        [DllImport("..\\..\\..\\..\\Flow\\bin\\Debug\\net7.0-windows\\Runtime", CharSet = CharSet.Unicode, SetLastError = true)]
+        [DllImport("..\\..\\..\\..\\Flow\\bin\\Debug\\net8.0-windows\\Runtime", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern IntPtr Evaluate(byte[] input, int programSize, int processorCount, int resultAdress);
     
         [SetUp]
