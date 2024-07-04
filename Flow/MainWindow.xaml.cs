@@ -1,6 +1,4 @@
 ﻿using System.Windows;
-using FlowCompiler;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Flow
 {
@@ -12,13 +10,6 @@ namespace Flow
         public MainWindow()
         {
             InitializeComponent();
-
-            var serviceCollection = new ServiceCollection();
-            serviceCollection.AddWpfBlazorWebView();
-            serviceCollection.AddSingleton<ICompiler, Compiler>();
-            serviceCollection.AddSingleton<IDebugger, Debugger>();
-            serviceCollection.AddSingleton<IBlockCompiler, BlockCompiler>();
-            Resources.Add("services", serviceCollection.BuildServiceProvider());
         }
     }
 }
