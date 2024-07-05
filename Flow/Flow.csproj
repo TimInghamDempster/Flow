@@ -20,11 +20,11 @@
   </PropertyGroup>
 	
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="6.0.400" />
+    <Folder Include="Properties\" />
   </ItemGroup>
 	
   <ItemGroup>
-    <Folder Include="Properties\" />
+    <ProjectReference Include="..\FlowUI\FlowUI.csproj" />
   </ItemGroup>
 
 </Project>
