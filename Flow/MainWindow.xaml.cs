@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using FlowUI;
+using System.Windows;
 
 namespace Flow
 {
@@ -9,6 +10,11 @@ namespace Flow
     {
         public MainWindow()
         {
+            var testBrowser = new TestBrowserViewModel();
+            var codeEditor = new CodeEditorViewModel();
+
+            DataContext = new RootControlViewModel(testBrowser, codeEditor);
+
             InitializeComponent();
         }
     }
