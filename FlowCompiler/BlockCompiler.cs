@@ -30,11 +30,12 @@
 
 
     public record Token(int StartIndex, int EndIndex, string Value);
+    public record ValueToken(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
     public record OpenPeren(int StartIndex, int EndIndex) : Token(StartIndex, EndIndex, "(");
     public record ClosePeren(int StartIndex, int EndIndex) : Token(StartIndex, EndIndex, ")");
     public record Space(int StartIndex, int EndIndex) : Token(StartIndex, EndIndex, " ");
     public record Assignment(int StartIndex, int EndIndex) : Token(StartIndex, EndIndex, "=");
-    public record NumberToken(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
+    public record NumberToken(int StartIndex, int EndIndex, string Value) : ValueToken(StartIndex, EndIndex, Value);
     public record IntNum(int StartIndex, int EndIndex, string Value) : NumberToken(StartIndex, EndIndex, Value);
     public record DoubleNum(int StartIndex, int EndIndex, string Value) : NumberToken(StartIndex, EndIndex, Value);
     public record FloatNum(int StartIndex, int EndIndex, string Value) : NumberToken(StartIndex, EndIndex, Value);
@@ -42,7 +43,7 @@
     public record ErrorToken(int StartIndex, int EndIndex, string Value, string Error) : Token(StartIndex, EndIndex, Value);
     public record Name(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
     public record Keyword(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
-    public record StringLiteral(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
+    public record StringLiteral(int StartIndex, int EndIndex, string Value) : ValueToken(StartIndex, EndIndex, Value);
 
     public interface IBlockCompiler
     {

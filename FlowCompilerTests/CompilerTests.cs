@@ -1,4 +1,5 @@
 ﻿using FlowCompiler;
+using FluentAssertions;
 using NSubstitute;
 
 namespace FlowCompilerTests
@@ -7,15 +8,87 @@ namespace FlowCompilerTests
     public class CompilerTests
     {
         [TestMethod]
-        public void ChangedBlockIsRecompiled()
+        public void AddTest()
         {
-            var blockCompiler = Substitute.For<IBlockCompiler>();
+            // Arrange
+            var program = new Program(new List<Test>());
+            var test = new Test("test", new List<Declaration>(), new Statement("statement", new List<Expression>()), new List<Declaration>());
 
-            var compiler = new Compiler(blockCompiler);
-            var program = compiler.DefaultProgram();
-            compiler.ProgramChanged(new (program, 0, "new line"));
+            // Act
+            var result = Compiler.AddTest(program, test);
 
-            blockCompiler.Received().Compile(Arg.Any<string>());
+            // Assert
+            result.Tests.Should().Contain(test);
+        }
+
+        [TestMethod]
+        public void AddSecondTest()
+        {
+            // Arrange
+            var test1 = new Test(
+                        "test",
+                        new List<Declaration>(),
+                        new Statement("statement", new List<Expression>()),
+                        new List<Declaration>());
+
+            var program = new Program(new List<Test> { test1 });
+
+            var test2 = new Test(
+                "test2", 
+                new List<Declaration>(), 
+                new Statement("statement", new List<Expression>()), 
+                new List<Declaration>());
+
+            // Act
+            var result = Compiler.AddTest(program, test2);
+
+            // Assert
+            result.Tests.Should().Contain(test1);
+            result.Tests.Should().Contain(test2);
+        }
+
+        [TestMethod]
+        public void RemoveTest()
+        {
+            // Arrange
+            var test = new Test(
+                "test",
+                new List<Declaration>(),
+                new Statement("statement", new List<Expression>()),
+                new List<Declaration>());
+
+            var test2 = test with { Name = "test2" };
+
+            var program = new Program(new List<Test> { test, test2 });
+
+            // Act
+            var result = Compiler.RemoveTest(program, test);
+
+            // Assert
+            result.Tests.Should().NotContain(test);
+            result.Tests.Should().Contain(test2);
+        }
+
+        [TestMethod]
+        public void UpdateTest()
+        {
+            // Arrange
+            var test = new Test(
+                "test",
+                new List<Declaration>(),
+                new Statement("statement", new List<Expression>()),
+                new List<Declaration>());
+
+            var test2 = test with { Name = "test2" };
+
+            var program = new Program(new List<Test> { test });
+
+            // Act
+            var result = Compiler.UpdateTest(program, test, test2);
+
+            // Assert
+            result.Tests.Should().NotContain(test);
+            result.Tests.Should().Contain(test2);
         }
     }
 }
