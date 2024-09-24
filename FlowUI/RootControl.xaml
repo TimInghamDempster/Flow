@@ -20,6 +20,7 @@
         <Menu Grid.ColumnSpan="3">
             <MenuItem Header="File">
                 <MenuItem Header="Save" Command="{Binding SaveProgram}"/>
+                <MenuItem Header="Open" Command="{Binding OpenProgram}"/>
             </MenuItem>
         </Menu>
         <local:TestBrowser DataContext="{Binding TestBrowserViewModel}" Grid.Row="1"/>

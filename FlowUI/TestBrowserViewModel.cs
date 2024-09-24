@@ -20,7 +20,13 @@ namespace FlowUI
             _testContext = testContext;
             AddTest = new RelayCommand(OnAddTest);
 
-            _programContext.Updated += () => OnPropertyChanged(nameof(Tests));
+            _programContext.Updated += OnProgramUpdated;
+        }
+
+        private void OnProgramUpdated()
+        {
+            _testContext.Update(_programContext.Current.Tests.First());
+            OnPropertyChanged(nameof(Tests));
         }
 
         private void OnAddTest()
@@ -43,7 +49,7 @@ namespace FlowUI
         public Test SelectedTest 
         {
             get => _testContext.Current; 
-            set => _testContext.Update(value);
+            set => _testContext.Update(value ?? _testContext.Current);
         }
 
         private void OnPropertyChanged(string propertyName)

@@ -21,6 +21,7 @@ namespace FlowUI
             _programContext = programContext;
 
             SaveProgram = new RelayCommand(OnSaveProgram);
+            OpenProgram = new RelayCommand(OnOpenProgram);
         }
 
         public TestBrowserViewModel TestBrowserViewModel { get; }
@@ -40,6 +41,26 @@ namespace FlowUI
                 var filePath = dialog.FileName;
 
                 File.WriteAllText(filePath, JsonSerializer.Serialize(_programContext.Current));
+            }
+        }
+
+        public ICommand OpenProgram { get; }
+
+        private void OnOpenProgram()
+        {
+            var dialog = new OpenFileDialog();
+            dialog.Filter = "Flow Program (*.flow)|*.flow";
+            dialog.DefaultExt = ".flow";
+            dialog.AddExtension = true;
+
+            if (dialog.ShowDialog() == true)
+            {
+                var filePath = dialog.FileName;
+
+                var program = JsonSerializer.Deserialize<Program>(File.ReadAllText(filePath));
+
+                if(program is not null)
+                    _programContext.Update(program);
             }
         }
     }
