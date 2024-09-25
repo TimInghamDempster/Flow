@@ -12,7 +12,7 @@ namespace FlowCompilerTests
         {
             // Arrange
             var program = new Program(new List<Test>());
-            var test = new Test("test", new List<Declaration>(), new Statement("statement", new List<Expression>()), new List<Declaration>());
+            var test = new Test(Guid.Empty, "test", new List<Declaration>(), new Statement("statement", new List<Expression>()), new List<Declaration>());
 
             // Act
             var result = Compiler.AddTest(program, test);
@@ -26,14 +26,16 @@ namespace FlowCompilerTests
         {
             // Arrange
             var test1 = new Test(
-                        "test",
-                        new List<Declaration>(),
-                        new Statement("statement", new List<Expression>()),
-                        new List<Declaration>());
+                Guid.Empty,
+                "test",
+                new List<Declaration>(),
+                new Statement("statement", new List<Expression>()),
+                new List<Declaration>());
 
             var program = new Program(new List<Test> { test1 });
 
             var test2 = new Test(
+                Guid.Empty,
                 "test2", 
                 new List<Declaration>(), 
                 new Statement("statement", new List<Expression>()), 
@@ -52,6 +54,7 @@ namespace FlowCompilerTests
         {
             // Arrange
             var test = new Test(
+                Guid.Empty,
                 "test",
                 new List<Declaration>(),
                 new Statement("statement", new List<Expression>()),
@@ -74,6 +77,7 @@ namespace FlowCompilerTests
         {
             // Arrange
             var test = new Test(
+                Guid.Empty,
                 "test",
                 new List<Declaration>(),
                 new Statement("statement", new List<Expression>()),

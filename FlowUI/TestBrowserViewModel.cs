@@ -25,13 +25,18 @@ namespace FlowUI
 
         private void OnProgramUpdated()
         {
-            _testContext.Update(_programContext.Current.Tests.First());
+            var oldTest = _testContext.Current.Id;
+            _testContext.Update(
+                _programContext.Current.Tests.First(t => t.Id == oldTest) ?? 
+                _programContext.Current.Tests.First());
+
             OnPropertyChanged(nameof(Tests));
         }
 
         private void OnAddTest()
         {
             var newTest = new Test(
+                Guid.NewGuid(),
                 $"Test {Tests.Count()}",
                 Array.Empty<Declaration>(),
                 new Statement("New Statement", Array.Empty<Expression>()),

@@ -2,6 +2,7 @@
 using FlowUI;
 using System.Windows;
 using System.Collections.Generic;
+using System;
 
 namespace Flow
 {
@@ -13,6 +14,7 @@ namespace Flow
         public MainWindow()
         {
             var initialTest = new Test(
+                Guid.NewGuid(),
                 "Test 0",
                 new List<Declaration>(),
                 new Statement("New Statement", new List<FlowCompiler.Expression>()),
@@ -23,7 +25,7 @@ namespace Flow
             var testContext = new Context<Test>(initialTest);
 
             var testBrowser = new TestBrowserViewModel(programContext, testContext);
-            var codeEditor = new CodeEditorViewModel(testContext);
+            var codeEditor = new CodeEditorViewModel(programContext, testContext);
 
             DataContext = new RootControlViewModel(testBrowser, codeEditor, programContext);
 

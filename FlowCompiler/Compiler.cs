@@ -6,6 +6,7 @@ namespace FlowCompiler
 {
     public record Program(IReadOnlyList<Test> Tests);
     public record Test(
+        Guid Id,
         string Name, 
         IReadOnlyList<Declaration> InitialState,
         Statement Statement,

@@ -10,7 +10,9 @@
     <DockPanel>
         <Label DockPanel.Dock="Top">Test Browser</Label>
         <Button DockPanel.Dock="Top" Command="{Binding AddTest}">+</Button>
-        <ListBox ItemsSource="{Binding Tests}" SelectedItem="{Binding SelectedTest}">
+        <ListBox ItemsSource="{Binding Tests}" 
+                 SelectedItem="{Binding SelectedTest}"
+                 SelectedIndex="{Binding SelectedIndex, Mode=OneWayToSource}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Label Content="{Binding Name}"/>
