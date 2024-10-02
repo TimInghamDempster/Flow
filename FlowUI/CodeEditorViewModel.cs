@@ -1,32 +1,52 @@
 ﻿using FlowCompiler;
 using System.ComponentModel;
+using Utils;
 
 namespace FlowUI
 {
     public class CodeEditorViewModel : INotifyPropertyChanged
     {
-        private readonly Context<Program> _programContext;
-        private readonly Context<Test> _testContext;
+        private Example _example;
+        private MessageQueue _messageQueue;
+        private readonly Store<Example> _exampleStore;
 
-        public CodeEditorViewModel(Context<Program> programContext, Context<Test> testContext)
+        public CodeEditorViewModel(MessageQueue messageQueue, Store<Example> exampleStore)
         {
-            _programContext = programContext;
-            _testContext = testContext;
-            _testContext.Updated += () => OnPropertyChanged(nameof(Name));
+            _messageQueue = messageQueue;
+            _exampleStore = exampleStore;
+            _example = new(
+                new(), 
+                "", 
+                new List<Declaration>(),
+                new("", new List<Expression>()),
+                new List<Declaration>());
+
+            _messageQueue.Register<SelectedExampleChanged>(m => OnSelectedExampleChanged(m.Example));
+            _messageQueue.Register<ExampleModified>(m => OnExampleModified(m.Example));
+        }
+
+        private void OnExampleModified(Example example)
+        {
+            _example = example;
+            OnPropertyChanged(nameof(Name));
+        }
+
+        private void OnSelectedExampleChanged(Guid example)
+        {
+            _example = _exampleStore.Get(example);
+            OnPropertyChanged(nameof(Name));
         }
 
         public string Name
         { 
-            get => _testContext.Current.Name;
+            get => _example.Name;
             set => RenameTest(value);
         }
 
         private void RenameTest(string value)
         {
-            _programContext.Update(Compiler.UpdateTest(
-                _programContext.Current,
-                _testContext.Current,
-                _testContext.Current with { Name = value }));
+            var newTest = _example with { Name = value };
+            _messageQueue.Send(new ExampleModifiedInUI(newTest));
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

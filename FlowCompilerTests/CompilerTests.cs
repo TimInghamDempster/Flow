@@ -11,30 +11,30 @@ namespace FlowCompilerTests
         public void AddTest()
         {
             // Arrange
-            var program = new Program(new List<Test>());
-            var test = new Test(Guid.Empty, "test", new List<Declaration>(), new Statement("statement", new List<Expression>()), new List<Declaration>());
+            var program = new Program(new List<Guid>());
+            var test = new Example(Guid.Empty, "test", new List<Declaration>(), new Statement("statement", new List<Expression>()), new List<Declaration>());
 
             // Act
-            var result = Compiler.AddTest(program, test);
+            var result = Compiler.AddExample(program, test);
 
             // Assert
-            result.Tests.Should().Contain(test);
+            result.Examples.Should().Contain(test.Id);
         }
 
         [TestMethod]
         public void AddSecondTest()
         {
             // Arrange
-            var test1 = new Test(
+            var test1 = new Example(
                 Guid.Empty,
                 "test",
                 new List<Declaration>(),
                 new Statement("statement", new List<Expression>()),
                 new List<Declaration>());
 
-            var program = new Program(new List<Test> { test1 });
+            var program = new Program(new List<Guid> { test1.Id });
 
-            var test2 = new Test(
+            var test2 = new Example(
                 Guid.Empty,
                 "test2", 
                 new List<Declaration>(), 
@@ -42,18 +42,18 @@ namespace FlowCompilerTests
                 new List<Declaration>());
 
             // Act
-            var result = Compiler.AddTest(program, test2);
+            var result = Compiler.AddExample(program, test2);
 
             // Assert
-            result.Tests.Should().Contain(test1);
-            result.Tests.Should().Contain(test2);
+            result.Examples.Should().Contain(test1.Id);
+            result.Examples.Should().Contain(test2.Id);
         }
 
         [TestMethod]
         public void RemoveTest()
         {
             // Arrange
-            var test = new Test(
+            var test = new Example(
                 Guid.Empty,
                 "test",
                 new List<Declaration>(),
@@ -62,37 +62,14 @@ namespace FlowCompilerTests
 
             var test2 = test with { Name = "test2" };
 
-            var program = new Program(new List<Test> { test, test2 });
+            var program = new Program(new List<Guid> { test.Id, test2.Id });
 
             // Act
-            var result = Compiler.RemoveTest(program, test);
+            var result = Compiler.RemoveTest(program, test.Id);
 
             // Assert
-            result.Tests.Should().NotContain(test);
-            result.Tests.Should().Contain(test2);
-        }
-
-        [TestMethod]
-        public void UpdateTest()
-        {
-            // Arrange
-            var test = new Test(
-                Guid.Empty,
-                "test",
-                new List<Declaration>(),
-                new Statement("statement", new List<Expression>()),
-                new List<Declaration>());
-
-            var test2 = test with { Name = "test2" };
-
-            var program = new Program(new List<Test> { test });
-
-            // Act
-            var result = Compiler.UpdateTest(program, test, test2);
-
-            // Assert
-            result.Tests.Should().NotContain(test);
-            result.Tests.Should().Contain(test2);
+            result.Examples.Should().NotContain(test.Id);
+            result.Examples.Should().Contain(test2.Id);
         }
     }
 }

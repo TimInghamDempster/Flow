@@ -3,6 +3,7 @@ using FlowUI;
 using System.Windows;
 using System.Collections.Generic;
 using System;
+using Utils;
 
 namespace Flow
 {
@@ -13,21 +14,24 @@ namespace Flow
     {
         public MainWindow()
         {
-            var initialTest = new Test(
+            var messageQueue = new MessageQueue();
+
+            var initialTest = new Example(
                 Guid.NewGuid(),
                 "Test 0",
                 new List<Declaration>(),
                 new Statement("New Statement", new List<FlowCompiler.Expression>()),
                 new List<Declaration>());
+            
 
-            var programContext = new Context<Program>(
-                new Program(new List<Test>() { initialTest}));
-            var testContext = new Context<Test>(initialTest);
+            var initialProgram = new Program(new List<Guid>() {});
+            var exampleStore = new Store<Example>();
 
-            var testBrowser = new TestBrowserViewModel(programContext, testContext);
-            var codeEditor = new CodeEditorViewModel(programContext, testContext);
+            var compiler = new Compiler(messageQueue, initialProgram, exampleStore);
+            var testBrowser = new ExampleBrowserViewModel(exampleStore, messageQueue, initialProgram);
+            var codeEditor = new CodeEditorViewModel(messageQueue, exampleStore);
 
-            DataContext = new RootControlViewModel(testBrowser, codeEditor, programContext);
+            DataContext = new RootControlViewModel(testBrowser, codeEditor, initialProgram, messageQueue);
 
             InitializeComponent();
         }

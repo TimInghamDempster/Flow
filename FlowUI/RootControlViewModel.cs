@@ -4,27 +4,38 @@ using System.Text.Json;
 using System.Windows.Input;
 using FlowCompiler;
 using CommunityToolkit.Mvvm.Input;
+using Utils;
 
 namespace FlowUI
 {
     public class RootControlViewModel
     {
-        private readonly Context<Program> _programContext;
+        private Program _program;
+        private readonly MessageQueue _messageQueue;
 
         public RootControlViewModel(
-            TestBrowserViewModel testBrowserViewModel, 
+            ExampleBrowserViewModel testBrowserViewModel, 
             CodeEditorViewModel codeEditorViewModel,
-            Context<Program> programContext)
+            Program initialProgram,
+            MessageQueue messageQueue)
         {
             TestBrowserViewModel = testBrowserViewModel;
             CodeEditorViewModel = codeEditorViewModel;
-            _programContext = programContext;
+            _messageQueue = messageQueue;
+            _program = initialProgram;
+
+            messageQueue.Register<ProgramUpdated>(m => OnProgramUpdated(m.Program));
 
             SaveProgram = new RelayCommand(OnSaveProgram);
             OpenProgram = new RelayCommand(OnOpenProgram);
         }
 
-        public TestBrowserViewModel TestBrowserViewModel { get; }
+        private void OnProgramUpdated(Program program)
+        {
+            _program = program;
+        }
+
+        public ExampleBrowserViewModel TestBrowserViewModel { get; }
         public CodeEditorViewModel CodeEditorViewModel { get; }
 
         public ICommand SaveProgram { get; }
@@ -40,7 +51,7 @@ namespace FlowUI
             {
                 var filePath = dialog.FileName;
 
-                File.WriteAllText(filePath, JsonSerializer.Serialize(_programContext.Current));
+                File.WriteAllText(filePath, JsonSerializer.Serialize(_program));
             }
         }
 
@@ -60,7 +71,7 @@ namespace FlowUI
                 var program = JsonSerializer.Deserialize<Program>(File.ReadAllText(filePath));
 
                 if(program is not null)
-                    _programContext.Update(program);
+                    _messageQueue.Send(new ProgramUpdated(program));
             }
         }
     }

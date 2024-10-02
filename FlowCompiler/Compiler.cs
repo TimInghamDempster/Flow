@@ -1,11 +1,10 @@
-﻿using System.Diagnostics;
-using System.Text;
-using System.Text.Json;
+﻿using Utils;
 
 namespace FlowCompiler
 {
-    public record Program(IReadOnlyList<Test> Tests);
-    public record Test(
+    public record Program(IReadOnlyList<Guid> Examples);
+
+    public record Example(
         Guid Id,
         string Name, 
         IReadOnlyList<Declaration> InitialState,
@@ -18,27 +17,49 @@ namespace FlowCompiler
 
     public record Expression(string Name, IReadOnlyList<Token> Arguments);
 
-    public static class Compiler
+    public record UserAddedExample(Example Example) : IMessage;
+    public record ProgramUpdated(Program Program) : IMessage;
+    public record ExampleModified(Example Example) : IMessage;
+    public record ExampleModifiedInUI(Example Example) : IMessage;
+
+    public class Compiler
     {
-        public static Program AddTest(Program program, Test test)
+        private readonly MessageQueue _messageQueue;
+        private Program _program;
+        private readonly Store<Example> _examples;
+
+        public Compiler(MessageQueue messageQueue, Program initialProgram, Store<Example> examples)
         {
-            var tests = new List<Test>(program.Tests);
-            tests.Add(test);
-            return new Program(tests);
+            _messageQueue = messageQueue;
+            _program = initialProgram;
+            _examples = examples;
+            
+            _messageQueue.Register<UserAddedExample>(m =>
+            {
+                _examples.Add(m.Example.Id, m.Example);
+                var newProgram = AddExample(_program, m.Example);
+                _program = newProgram;
+                _messageQueue.Send(new ProgramUpdated(newProgram));
+            });
+
+            _messageQueue.Register<ExampleModifiedInUI>(m =>
+            {
+                _examples.Update(m.Example.Id, m.Example);
+                _messageQueue.Send(new ExampleModified(m.Example));
+                _messageQueue.Send(new ProgramUpdated(_program));
+            });
         }
 
-        public static Program RemoveTest(Program program, Test test)
+        public static Program AddExample(Program program, Example example)
         {
-            var tests = new List<Test>(program.Tests);
+            var examples = new List<Guid>(program.Examples) { example.Id };
+            return new Program(examples);
+        }
+
+        public static Program RemoveTest(Program program, Guid test)
+        {
+            var tests = new List<Guid>(program.Examples);
             tests.Remove(test);
-            return new Program(tests);
-        }
-
-        public static Program UpdateTest(Program program, Test original, Test updated)
-        {
-            var tests = new List<Test>(program.Tests);
-            tests.Remove(original);
-            tests.Add(updated);
             return new Program(tests);
         }
     }
