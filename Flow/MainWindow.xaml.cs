@@ -16,14 +16,6 @@ namespace Flow
         {
             var messageQueue = new MessageQueue();
 
-            var initialTest = new Example(
-                Guid.NewGuid(),
-                "Test 0",
-                new List<Declaration>(),
-                new Statement("New Statement", new List<FlowCompiler.Expression>()),
-                new List<Declaration>());
-            
-
             var initialProgram = new Program(new List<Guid>() {});
             var exampleStore = new Store<Example>();
 

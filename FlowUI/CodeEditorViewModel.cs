@@ -18,7 +18,7 @@ namespace FlowUI
                 new(), 
                 "", 
                 new List<Declaration>(),
-                new("", new List<Expression>()),
+                new("", new List<Token>()),
                 new List<Declaration>());
 
             _messageQueue.Register<SelectedExampleChanged>(m => OnSelectedExampleChanged(m.Example));
@@ -29,6 +29,7 @@ namespace FlowUI
         {
             _example = example;
             OnPropertyChanged(nameof(Name));
+            OnPropertyChanged(nameof(Code));
         }
 
         private void OnSelectedExampleChanged(Guid example)
@@ -42,6 +43,24 @@ namespace FlowUI
             get => _example.Name;
             set => RenameTest(value);
         }
+
+        public string Code
+        {
+            get => DeserializeCode();
+            set => OnCodeChanged(value);
+        }
+
+        private void OnCodeChanged(string value)
+        {
+            _messageQueue.Send(new ExampleCodeModifiedInUI(_example, value));
+        }
+
+        private string DeserializeCode() =>
+            _example.InitialState
+                .Select(d => $"{d.Name}")
+                .Concat([$"{_example.Expression.Name}"])
+                .Concat(_example.ExpectedState.Select(d => $"{d.Name} = {d.Value}"))
+                .Aggregate((a, b) => $"{a}\n{b}");
 
         private void RenameTest(string value)
         {

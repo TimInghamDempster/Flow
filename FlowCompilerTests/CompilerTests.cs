@@ -12,7 +12,7 @@ namespace FlowCompilerTests
         {
             // Arrange
             var program = new Program(new List<Guid>());
-            var test = new Example(Guid.Empty, "test", new List<Declaration>(), new Statement("statement", new List<Expression>()), new List<Declaration>());
+            var test = new Example(Guid.Empty, "test", new List<Declaration>(), new Expression("statement", []), new List<Declaration>());
 
             // Act
             var result = Compiler.AddExample(program, test);
@@ -29,7 +29,7 @@ namespace FlowCompilerTests
                 Guid.Empty,
                 "test",
                 new List<Declaration>(),
-                new Statement("statement", new List<Expression>()),
+                new Expression("statement", []),
                 new List<Declaration>());
 
             var program = new Program(new List<Guid> { test1.Id });
@@ -38,7 +38,7 @@ namespace FlowCompilerTests
                 Guid.Empty,
                 "test2", 
                 new List<Declaration>(), 
-                new Statement("statement", new List<Expression>()), 
+                new Expression("statement", []), 
                 new List<Declaration>());
 
             // Act
@@ -57,7 +57,7 @@ namespace FlowCompilerTests
                 Guid.Empty,
                 "test",
                 new List<Declaration>(),
-                new Statement("statement", new List<Expression>()),
+                new Expression("statement", []),
                 new List<Declaration>());
 
             var test2 = test with { Name = "test2" };

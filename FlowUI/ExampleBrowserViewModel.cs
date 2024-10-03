@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using FlowCompiler;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows.Input;
 using Utils;
@@ -51,7 +50,7 @@ namespace FlowUI
                 Guid.NewGuid(),
                 $"Test {Examples.Count()}",
                 Array.Empty<Declaration>(),
-                new Statement("New Statement", Array.Empty<Expression>()),
+                new Expression("New Statement", []),
                 Array.Empty<Declaration>());
 
             _messageQueue.Send(new UserAddedExample(newExample));
