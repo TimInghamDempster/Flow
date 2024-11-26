@@ -20,10 +20,10 @@ namespace Flow
             var exampleStore = new Store<Example>();
 
             var compiler = new Compiler(messageQueue, initialProgram, exampleStore);
-            var testBrowser = new ExampleBrowserViewModel(exampleStore, messageQueue, initialProgram);
-            var codeEditor = new CodeEditorViewModel(messageQueue, exampleStore);
+            var exampleBrowser = new ExampleBrowserViewModel(exampleStore, messageQueue, initialProgram);
+            var codeEditor = new CodeEditorViewModel(messageQueue);
 
-            DataContext = new RootControlViewModel(testBrowser, codeEditor, initialProgram, messageQueue);
+            DataContext = new RootControlViewModel(exampleBrowser, codeEditor, initialProgram, messageQueue);
 
             InitializeComponent();
         }

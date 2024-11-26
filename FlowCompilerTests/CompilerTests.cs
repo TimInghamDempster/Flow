@@ -12,7 +12,13 @@ namespace FlowCompilerTests
         {
             // Arrange
             var program = new Program(new List<Guid>());
-            var test = new Example(Guid.Empty, "test", new List<Declaration>(), new Expression("statement", []), new List<Declaration>());
+            var test = new Example(
+                Guid.Empty, 
+                "test",
+                new List<Declaration>(),
+                new Expression(new(0,0,"statement"), []), 
+                new List<Declaration>(),
+                new ([], [], []));
 
             // Act
             var result = Compiler.AddExample(program, test);
@@ -29,8 +35,9 @@ namespace FlowCompilerTests
                 Guid.Empty,
                 "test",
                 new List<Declaration>(),
-                new Expression("statement", []),
-                new List<Declaration>());
+                new Expression(new(0, 0, "statement"), []),
+                new List<Declaration>(),
+                new([], [], []));
 
             var program = new Program(new List<Guid> { test1.Id });
 
@@ -38,8 +45,9 @@ namespace FlowCompilerTests
                 Guid.Empty,
                 "test2", 
                 new List<Declaration>(), 
-                new Expression("statement", []), 
-                new List<Declaration>());
+                new Expression(new(0, 0, "statement"), []), 
+                new List<Declaration>(),
+                new([], [], []));
 
             // Act
             var result = Compiler.AddExample(program, test2);
@@ -54,18 +62,19 @@ namespace FlowCompilerTests
         {
             // Arrange
             var test = new Example(
-                Guid.Empty,
+                Guid.NewGuid(),
                 "test",
                 new List<Declaration>(),
-                new Expression("statement", []),
-                new List<Declaration>());
+                new Expression(new(0, 0, "statement"), []),
+                new List<Declaration>(),
+                new([], [], []));
 
-            var test2 = test with { Name = "test2" };
+            var test2 = test with { Id = Guid.NewGuid() };
 
             var program = new Program(new List<Guid> { test.Id, test2.Id });
 
             // Act
-            var result = Compiler.RemoveTest(program, test.Id);
+            var result = Compiler.RemoveExample(program, test.Id);
 
             // Assert
             result.Examples.Should().NotContain(test.Id);

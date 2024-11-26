@@ -23,7 +23,7 @@
                 <MenuItem Header="Open" Command="{Binding OpenProgram}"/>
             </MenuItem>
         </Menu>
-        <local:ExampleBrowser DataContext="{Binding TestBrowserViewModel}" Grid.Row="1"/>
+        <local:ExampleBrowser DataContext="{Binding ExampleBrowserViewModel}" Grid.Row="1"/>
         <GridSplitter Grid.Column="1" Grid.Row="1"
               HorizontalAlignment="Center"
               VerticalAlignment="Stretch"

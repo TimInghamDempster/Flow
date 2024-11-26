@@ -1,6 +1,6 @@
 ﻿namespace FlowCompiler
 {
-    internal abstract record Instruction(OpCodes OpCode, uint VectorSize)
+    public abstract record Instruction(OpCodes OpCode, uint VectorSize)
     {
         internal abstract IEnumerable<IDataElement> ArgumentData { get; }
     }

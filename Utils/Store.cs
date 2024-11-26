@@ -1,4 +1,4 @@
-﻿namespace FlowCompiler
+﻿namespace Utils
 {
     public class Store<T>
     {

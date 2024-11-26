@@ -14,12 +14,12 @@ namespace FlowUI
         private readonly MessageQueue _messageQueue;
 
         public RootControlViewModel(
-            ExampleBrowserViewModel testBrowserViewModel, 
+            ExampleBrowserViewModel exampleBrowserViewModel, 
             CodeEditorViewModel codeEditorViewModel,
             Program initialProgram,
             MessageQueue messageQueue)
         {
-            TestBrowserViewModel = testBrowserViewModel;
+            ExampleBrowserViewModel = exampleBrowserViewModel;
             CodeEditorViewModel = codeEditorViewModel;
             _messageQueue = messageQueue;
             _program = initialProgram;
@@ -35,10 +35,12 @@ namespace FlowUI
             _program = program;
         }
 
-        public ExampleBrowserViewModel TestBrowserViewModel { get; }
+        public ExampleBrowserViewModel ExampleBrowserViewModel { get; }
         public CodeEditorViewModel CodeEditorViewModel { get; }
 
         public ICommand SaveProgram { get; }
+
+        private record ProgramDTO(Program Program, IReadOnlyList<Example> Examples);
 
         private void OnSaveProgram()
         {
@@ -51,7 +53,9 @@ namespace FlowUI
             {
                 var filePath = dialog.FileName;
 
-                File.WriteAllText(filePath, JsonSerializer.Serialize(_program));
+                var data = new ProgramDTO(_program, ExampleBrowserViewModel.Examples.ToList());
+
+                File.WriteAllText(filePath, JsonSerializer.Serialize(data));
             }
         }
 

@@ -25,7 +25,7 @@ namespace FlowUI
 
             _exampleStore = examples;
 
-            AddTest = new RelayCommand(OnAddExample);
+            AddExample = new RelayCommand(OnAddExample);
             _program = program;
 
             _messageQueue.Register<ProgramUpdated>(m => OnProgramUpdated(m.Program));
@@ -48,10 +48,11 @@ namespace FlowUI
         {
             var newExample = new Example(
                 Guid.NewGuid(),
-                $"Test {Examples.Count()}",
+                $"Example {Examples.Count()}",
                 Array.Empty<Declaration>(),
-                new Expression("New Statement", []),
-                Array.Empty<Declaration>());
+                new Expression(new(0, 0, "statement"), []),
+                Array.Empty<Declaration>(),
+                new([], [], []));
 
             _messageQueue.Send(new UserAddedExample(newExample));
         }
@@ -59,7 +60,7 @@ namespace FlowUI
         private List<Example> _exampleList = [];
         public IEnumerable<Example> Examples => _exampleList;
 
-        public ICommand AddTest { get; }
+        public ICommand AddExample { get; }
 
         private Example? _selectedExample;
         public Example? SelectedExample 

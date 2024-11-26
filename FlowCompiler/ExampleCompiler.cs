@@ -1,5 +1,12 @@
-﻿namespace FlowCompiler
+﻿
+namespace FlowCompiler
 {
+    public record LineUIFormat(IReadOnlyList<Token> Tokens);
+    public record ExampleUIFormat(
+        Guid Id,
+        string Name,
+        IReadOnlyList<LineUIFormat> Lines);
+
     public record CodeBlock(IReadOnlyList<Line> Lines);
     public record Line(string Source, ParsedLine ParsedLine);
     public record Message(IReadOnlyList<Line> Lines) : CodeBlock(Lines);
@@ -28,6 +35,9 @@
     }
     public record ErrorLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
 
+    public record Declaration(string Name, IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
+
+    public record Expression(Name Name, IReadOnlyList<Token> Tokens) : ParsedLine(Tokens);
 
     public record Token(int StartIndex, int EndIndex, string Value);
     public record ValueToken(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
@@ -45,37 +55,118 @@
     public record Keyword(int StartIndex, int EndIndex, string Value) : Token(StartIndex, EndIndex, Value);
     public record StringLiteral(int StartIndex, int EndIndex, string Value) : ValueToken(StartIndex, EndIndex, Value);
 
-    public interface IBlockCompiler
+    public class ExampleCompiler
     {
-        CodeBlock Compile(string code);
-    }
-
-    public class BlockCompiler : IBlockCompiler
-    {
-        public CodeBlock Compile(string code)
+        public static (Example, ExampleUIFormat) Compile(Guid id, string name, string code)
         {
             var lines = 
                 code.Split('\n').
                 Select(l => new Line(l, CompileLine(l))).
                 ToList();
 
-            return new CodeBlock(lines);
+            return LinesToExample(id, name, lines);
         }
 
-        public ParsedLine CompileLine(string line)
+
+        enum ExamplePhase
+        {
+            InitialCoditions,
+            Expression,
+            ExpectedState,
+        }
+
+        private static (Example, ExampleUIFormat) LinesToExample(Guid id, string name, List<Line> lines)
+        {
+            var declarations = new List<Declaration>();
+            Expression? expression = null;
+            var expectedState = new List<Declaration>();
+
+            var tokenLines = new List<LineUIFormat>();
+
+            var phase = ExamplePhase.InitialCoditions;
+
+            foreach (var line in lines)
+            {
+                if (phase == ExamplePhase.InitialCoditions)
+                {
+                    if (line.ParsedLine is Declaration d)
+                    { 
+                        declarations.Add(d);
+                        tokenLines.Add(new (d.Tokens));
+                    }
+                    else if(line.ParsedLine is Expression e)
+                    {
+                        expression = e;
+                        phase = ExamplePhase.ExpectedState;
+                        tokenLines.Add(new(e.Tokens));
+                    }
+                    else
+                    {
+                        var tokens = line.ParsedLine.Tokens.ToList();
+                        tokens.Add(new ErrorToken(
+                            0, 0, "", "Declaration or expression expected"));
+                        tokenLines.Add(new(tokens));
+                    }
+                }
+                else if (phase == ExamplePhase.ExpectedState)
+                {
+                    if (line.ParsedLine is Declaration d)
+                    {
+                        expectedState.Add(d);
+                        tokenLines.Add(new(d.Tokens));
+                    }
+                    else
+                    {
+                        var tokens = line.ParsedLine.Tokens.ToList();
+                        tokens.Add(new ErrorToken(
+                            0, 0, line.Source, "Declaration expected"));
+                        tokenLines.Add(new(tokens));
+                    }
+                }
+            }
+
+            expression ??= new Expression(
+                new Name(0, 0, ""), 
+                new List<Token>() { 
+                    new ErrorToken(0, 0, "", "No expression found in example") });
+
+            var decs = declarations as IEnumerable<ParsedLine>;
+            decs = decs.Append(expression).Concat(expectedState);
+
+            var assembly = Assemble(decs);
+
+            return (new (
+                id,
+                name,
+                declarations,
+                expression,
+                expectedState,
+                assembly),
+                new (id, name, tokenLines));
+        }
+
+        private static AssemblyProgram Assemble(IEnumerable<ParsedLine> value)
+        {
+            //throw new NotImplementedException();
+            return new AssemblyProgram(
+                new List<Instruction>(),
+                new List<IDataElement>(),
+                new List<int>());
+        }
+
+        public static ParsedLine CompileLine(string line)
         {
             return line switch
             {
-                var s when s.StartsWith("val") => CompileExpression(s),
+                var s when s.StartsWith("let") => CompileExpression(s),
                 var s when s.StartsWith("step") => CompileStep(s),
                 var s when s.StartsWith("message") => CompileMessage(s),
-                var s when s.StartsWith("test") => CompileTest(s, 0),
                 var s when s.StartsWith("emit") => CompileEmit(s),
                 _ =>
                 new ErrorLine(new List<Token> { new ErrorToken(0, 0, line, """Line must start with "val" or "step".""") })
             };
         }
-        private ParsedLine CompileEmit(string value)
+        private static ParsedLine CompileEmit(string value)
         {
             var tokens = Tokenize(value, "emit");
 
@@ -96,34 +187,7 @@
             return TokensToLine(tokens, new EmitLine(tokens, il));
         }
 
-        private ParsedLine CompileTest(string test, int lineNumber)
-        {
-            var tokens = Tokenize(test, "test");
-
-            if (lineNumber != 0)
-            {
-                tokens.Add(new ErrorToken(1, 1, "", "Tests can only be declared on line 1"));
-            }
-
-            if (tokens.Count() < 2)
-            {
-                tokens.Add(new ErrorToken(1, 1, "", "A test must have a name"));
-            }
-            if (tokens.Count() > 2)
-            {
-                tokens.Add(new ErrorToken(1, 1, "", "A test can only have one name"));
-            }
-
-            if (tokens[1] is not (Name or ErrorToken))
-            {
-                var token = tokens[1];
-                tokens[1] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A test name must be valid");
-            }
-
-            return TokensToLine(tokens, new TestLine(tokens));
-        }
-
-        private ParsedLine CompileMessage(string messageDef)
+        private static ParsedLine CompileMessage(string messageDef)
         {
             var tokens = Tokenize(messageDef, "message");
 
@@ -143,7 +207,7 @@
             return TokensToLine(tokens, new BlockStartLine(tokens));
         }
 
-        private ParsedLine CompileStep(string step)
+        private static ParsedLine CompileStep(string step)
         {
             var tokens = Tokenize(step, "step");
 
@@ -170,7 +234,7 @@
             return TokensToLine(tokens, new BlockStartLine(tokens));
         }
 
-        public ParsedLine CompileExpression(string expression)
+        public static ParsedLine CompileExpression(string expression)
         {
             List<Token> tokens = Tokenize(expression, "val");
 
@@ -204,7 +268,8 @@
             }
 
             CheckSyntax(tokens, 3);
-            return TokensToLine(tokens, new StatementLine(tokens));
+            var name = tokens.ElementAt(1) as Name;
+            return TokensToLine(tokens, new Expression(name!, tokens));
         }
 
         private static ParsedLine TokensToLine(List<Token> tokens, ParsedLine goodLine)
@@ -214,7 +279,7 @@
                 goodLine;
         }
 
-        private List<Token> Tokenize(string expression, string keyword)
+        private static List<Token> Tokenize(string expression, string keyword)
         {
             int index = keyword.Length;
             List<Token> tokens = new()
@@ -234,7 +299,7 @@
             return tokens;
         }
 
-        private void CheckSyntax(List<Token> tokens, int skipCount)
+        private static void CheckSyntax(List<Token> tokens, int skipCount)
         {
             var previousToken = tokens[skipCount];
             for (int i = skipCount + 1; i < tokens.Count; i++)
@@ -246,7 +311,7 @@
             }
         }
 
-        private Token ValidateNextToken(Token previousToken, Token token) => (previousToken, token) switch
+        private static Token ValidateNextToken(Token previousToken, Token token) => (previousToken, token) switch
         {
             (Name, Operator) => token,
             (Operator, Name) => token,
@@ -260,7 +325,7 @@
             _ => new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "Unknown syntax error")
         };
 
-        private Token GetToken(string line, int index) => line[index] switch
+        private static Token GetToken(string line, int index) => line[index] switch
         {
             '(' => new OpenPeren(index, index),
             ')' => new ClosePeren(index, index),
@@ -275,7 +340,7 @@
             _ => GetName(line, index)
         };
 
-        private Token GetStringLiteral(string line, int index)
+        private static Token GetStringLiteral(string line, int index)
         {
             var endIndex = index + 1;
 
@@ -290,7 +355,7 @@
             return new StringLiteral(index, endIndex, line.Substring(index, endIndex - index));
         }
 
-        private Name GetName(string line, int index)
+        private static Name GetName(string line, int index)
         {
             var characters = new List<char>();
 
@@ -330,7 +395,7 @@
             Double,
         }
 
-        private Token Number(string line, int index)
+        private static Token Number(string line, int index)
         {
             var digits = new List<char>();
             var numberType = NumberType.Int;

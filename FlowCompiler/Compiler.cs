@@ -9,17 +9,15 @@ namespace FlowCompiler
         string Name, 
         IReadOnlyList<Declaration> InitialState,
         Expression Expression,
-        IReadOnlyList<Declaration> ExpectedState);
-
-    public record Declaration(string Name, ValueToken Value);
-
-    public record Expression(string Name, IReadOnlyList<Token> Arguments);
+        IReadOnlyList<Declaration> ExpectedState,
+        AssemblyProgram Assembly);
 
     public record UserAddedExample(Example Example) : IMessage;
     public record ProgramUpdated(Program Program) : IMessage;
     public record ExampleModified(Example Example) : IMessage;
-    public record ExampleModifiedInUI(Example Example) : IMessage;
-    public record ExampleCodeModifiedInUI(Example Example, string Code) : IMessage;
+    public record ExampleRenamedInUI(Guid Example, string NewName) : IMessage;
+    public record ExampleCodeModifiedInUI(Guid Example, string Code) : IMessage;
+    public record ExampleCompiledForUI(ExampleUIFormat Example) : IMessage;
 
     public class Compiler
     {
@@ -39,20 +37,24 @@ namespace FlowCompiler
                 var newProgram = AddExample(_program, m.Example);
                 _program = newProgram;
                 _messageQueue.Send(new ProgramUpdated(newProgram));
+                _messageQueue.Send(new ExampleCompiledForUI(
+                    new(m.Example.Id, m.Example.Name, [])));
             });
 
-            _messageQueue.Register<ExampleModifiedInUI>(m =>
+            _messageQueue.Register<ExampleRenamedInUI>(m =>
             {
-                _examples.Update(m.Example.Id, m.Example);
-                _messageQueue.Send(new ExampleModified(m.Example));
+                var example = _examples.Get(m.Example) with { Name = m.NewName };
+
+                _examples.Update(m.Example, example);
+                _messageQueue.Send(new ExampleModified(example));
                 _messageQueue.Send(new ProgramUpdated(_program));
             });
 
             _messageQueue.Register<ExampleCodeModifiedInUI>(m =>
             {
-                var example = CompileExample(m.Example.Id, m.Example.Name, m.Code);
-                _examples.Update(example.Id, example);
-                _messageQueue.Send(new ExampleModified(example));
+                var example = CompileExample(m.Example, _examples.Get(m.Example).Name, m.Code);
+                _examples.Update(example.Item1.Id, example.Item1);
+                _messageQueue.Send(new ExampleCompiledForUI(example.Item2));
             });
         }
 
@@ -62,23 +64,18 @@ namespace FlowCompiler
             return new Program(examples);
         }
 
-        public static Example CompileExample(Guid Id, string name, string code)
+        public static (Example, ExampleUIFormat) CompileExample(Guid Id, string name, string code)
         {
-            var declarations = code.Split(Environment.NewLine);
-            var example = new Example(
-                Id, name,
-                declarations.Select(d => new Declaration(d, new IntNum(0,0,"0"))).ToList(), 
-                new Expression("", new List<Token>()), 
-                new List<Declaration>());
+            var example = ExampleCompiler.Compile(Id, name, code);
 
             return example;
         }
 
-        public static Program RemoveTest(Program program, Guid test)
+        public static Program RemoveExample(Program program, Guid example)
         {
-            var tests = new List<Guid>(program.Examples);
-            tests.Remove(test);
-            return new Program(tests);
+            var examples = new List<Guid>(program.Examples);
+            examples.Remove(example);
+            return new Program(examples);
         }
     }
 }

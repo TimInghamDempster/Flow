@@ -1,9 +1,9 @@
 ﻿namespace FlowCompiler
 {
-    internal interface IDataElement { };
+    public interface IDataElement { };
     internal record struct DataElement<T>(T Value) : IDataElement;
 
-    internal record AssemblyProgram(
+    public record AssemblyProgram(
         IEnumerable<Instruction> Instructions,
         IEnumerable<IDataElement> Data,
         IEnumerable<int> StartInstructionPointers);
