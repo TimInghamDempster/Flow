@@ -20,6 +20,8 @@ namespace FlowUI
             _messageQueue.Register<ExampleRenamedInUI>(m => OnExampleRenamed(m.Example, m.NewName));
         }
 
+        public event Action? NotifyCodeChanged;
+
         private void OnExampleRenamed(Guid example, string newName)
         {
             var currentExample = _exampleStore.Get(example);
@@ -37,6 +39,7 @@ namespace FlowUI
             _example = _exampleStore.Get(example);
             OnPropertyChanged(nameof(Name));
             OnPropertyChanged(nameof(Code));
+            NotifyCodeChanged?.Invoke();
         }
 
         private void OnSelectedExampleCompiled(ExampleUIFormat example)
@@ -46,6 +49,7 @@ namespace FlowUI
             {
                 _example = example;
                 OnPropertyChanged(nameof(Code));
+                NotifyCodeChanged?.Invoke();
             }
         }
 
