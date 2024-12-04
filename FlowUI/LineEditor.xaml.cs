@@ -1,5 +1,8 @@
-﻿using System.Windows;
+﻿using FlowCompiler;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Media;
 
 namespace FlowUI
 {
@@ -16,7 +19,30 @@ namespace FlowUI
         protected void OnLoaded(object sender, RoutedEventArgs e)
         {
             (DataContext as CodeEditorViewModel)!.NotifyCodeChanged += () =>
-                _textDisplay.Text = (DataContext as CodeEditorViewModel)!.Code;
+            {
+                _textDisplay.Inlines.Clear();
+
+                foreach (var token in (DataContext as CodeEditorViewModel)!.Tokens)
+                {
+                    _textDisplay.Inlines.Add(token is ErrorToken error ?
+                    new Underline(
+                        new Run(token.Value) {
+                            Foreground = Brushes.Black,
+                            ToolTip = new Label() { Content = error.Value } })
+                    { Foreground = Brushes.Red } :
+                    new Run
+                    {
+                        Foreground = token switch
+                        {
+                            Keyword => Brushes.Blue,
+                            FlowCompiler.Name => Brushes.Green,
+                            _ => Brushes.Black
+                        },
+                        Text = token.Value
+                    });
+                    _textDisplay.Inlines.Add(" ");
+                }
+            };
         }
     }
 }

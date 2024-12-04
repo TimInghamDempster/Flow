@@ -3,15 +3,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:FlowUI"
+             xmlns:local="clr-namespace:FlowUI" 
+             d:DataContext="{d:DesignInstance Type=local:CodeEditorViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
              Loaded="OnLoaded">
-    <Grid DockPanel.Dock="Top">
-        <TextBlock Name="_textDisplay"/>
-        <TextBox Text="{Binding Code, UpdateSourceTrigger=PropertyChanged}" 
+    <DockPanel>
+        <Label DockPanel.Dock="Right" Content="E" Visibility="{Binding ErrorVisible}">
+            <Label.ToolTip>
+                <ListView ItemsSource="{Binding Errors}"/>
+            </Label.ToolTip>
+        </Label>
+        <Grid DockPanel.Dock="Left">
+            <TextBlock Name="_textDisplay"/>
+            <TextBox Text="{Binding Code, UpdateSourceTrigger=PropertyChanged}" 
          AcceptsReturn="True"
          Foreground="Transparent"
          Background="Transparent"/>
-    </Grid>
+        </Grid>
+    </DockPanel>
 </UserControl>

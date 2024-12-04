@@ -1,9 +1,15 @@
 ﻿using FlowCompiler;
 using System.ComponentModel;
+using System.Windows;
+using System.Windows.Media;
 using Utils;
 
 namespace FlowUI
 {
+    public record RenderableToken(
+        Brush Foreground,
+        string Text);
+
     public class CodeEditorViewModel : INotifyPropertyChanged
     {
         private ExampleUIFormat _example = new(new(), "", []);
@@ -49,6 +55,8 @@ namespace FlowUI
             {
                 _example = example;
                 OnPropertyChanged(nameof(Code));
+                OnPropertyChanged(nameof(Errors));
+                OnPropertyChanged(nameof(ErrorVisible));
                 NotifyCodeChanged?.Invoke();
             }
         }
@@ -64,6 +72,9 @@ namespace FlowUI
             get => DeserializeCode();
             set => OnCodeChanged(value);
         }
+
+        public IEnumerable<Token> Tokens => 
+            _example.Lines.FirstOrDefault()?.Tokens ?? [];
 
         private void OnCodeChanged(string value)
         {
@@ -98,5 +109,16 @@ namespace FlowUI
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        public IEnumerable<string> Errors => 
+            _example.
+            Lines.
+            FirstOrDefault()?.
+            Tokens?.OfType<ErrorToken>().
+            Select(e => e.Error)
+            ?? [];
+
+        public Visibility ErrorVisible => 
+            Errors.Any() ? Visibility.Visible : Visibility.Collapsed;
     }
 }

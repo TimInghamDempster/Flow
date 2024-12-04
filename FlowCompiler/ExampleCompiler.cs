@@ -90,7 +90,7 @@ namespace FlowCompiler
                 if (phase == ExamplePhase.InitialCoditions)
                 {
                     if (line.ParsedLine is Declaration d)
-                    { 
+                    {
                         declarations.Add(d);
                         tokenLines.Add(new (d.Tokens));
                     }
@@ -158,6 +158,7 @@ namespace FlowCompiler
         {
             return line switch
             {
+                var s when s.StartsWith("set") => CompileDeclaration(s),
                 var s when s.StartsWith("let") => CompileExpression(s),
                 var s when s.StartsWith("step") => CompileStep(s),
                 var s when s.StartsWith("message") => CompileMessage(s),
@@ -166,6 +167,44 @@ namespace FlowCompiler
                 new ErrorLine(new List<Token> { new ErrorToken(0, 0, line, """Line must start with "val" or "step".""") })
             };
         }
+
+        private static ParsedLine CompileDeclaration(string rawLine)
+        {
+            var tokens = Tokenize(rawLine, "set");
+
+            if(tokens.Count < 4)
+            {
+                tokens.Add(new ErrorToken(1, 1, "_", "A declaration must have a name and a value"));
+                return new Declaration("", tokens);
+            }
+
+            if (tokens[1] is not Name)
+            {
+                var token = tokens[1];
+                tokens[1] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A declaration must have a name");
+            }
+
+            if (tokens[2] is not Assignment)
+            {
+                var token = tokens[2];
+                tokens[2] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A declaration must have an assignment");
+            }
+
+            if (tokens[3] is not ValueToken)
+            {
+                var token = tokens[3];
+                tokens[3] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A declaration must have a value");
+            }
+
+            for(int i = 4; i < tokens.Count; i++)
+            {
+                var token = tokens[i];
+                tokens[i] = new ErrorToken(token.StartIndex, token.EndIndex, token.Value, "A declaration can only have one value");
+            }
+
+            return new Declaration(tokens[1].Value, tokens);
+        }
+
         private static ParsedLine CompileEmit(string value)
         {
             var tokens = Tokenize(value, "emit");
@@ -359,12 +398,14 @@ namespace FlowCompiler
         {
             var characters = new List<char>();
 
+            char[] terminatingChars = { ' ', '(', ')', '+', '-', '*', '/', '=' };
+
             var workingIndex = index;
             while (workingIndex < line.Length)
             {
                 var c = line[workingIndex];
 
-                if (c == ' ') break;
+                if (terminatingChars.Contains(c)) break;
 
                 characters.Add(c);
 
