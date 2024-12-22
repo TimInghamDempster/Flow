@@ -10,6 +10,6 @@
     <DockPanel>
         <Label DockPanel.Dock="Top">Code</Label>
         <TextBox DockPanel.Dock="Top" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
-        <local:LineEditor/>
+        <local:LineEditor DataContext="{Binding Line}"/>
     </DockPanel>
 </UserControl>

@@ -156,6 +156,7 @@ namespace FlowCompiler
 
         public static ParsedLine CompileLine(string line)
         {
+            line = line.Trim(' ');
             return line switch
             {
                 var s when s.StartsWith("set") => CompileDeclaration(s),
@@ -174,7 +175,7 @@ namespace FlowCompiler
 
             if(tokens.Count < 4)
             {
-                tokens.Add(new ErrorToken(1, 1, "_", "A declaration must have a name and a value"));
+                tokens.Add(new ErrorToken(1, 1, "", "A declaration must have a name and a value"));
                 return new Declaration("", tokens);
             }
 

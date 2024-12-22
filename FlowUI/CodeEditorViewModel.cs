@@ -17,16 +17,19 @@ namespace FlowUI
 
         private readonly Store<ExampleUIFormat> _exampleStore = new();
 
+        public LineEditorViewModel Line { get; } = new(new([]));
+
         public CodeEditorViewModel(MessageQueue messageQueue)
         {
             _messageQueue = messageQueue;
+
+            Line.OnCodeChanged += s => OnCodeChanged(s);
 
             _messageQueue.Register<SelectedExampleChanged>(m => OnSelectedExampleChanged(m.Example));
             _messageQueue.Register<ExampleCompiledForUI>(m => OnSelectedExampleCompiled(m.Example));
             _messageQueue.Register<ExampleRenamedInUI>(m => OnExampleRenamed(m.Example, m.NewName));
         }
 
-        public event Action? NotifyCodeChanged;
 
         private void OnExampleRenamed(Guid example, string newName)
         {
@@ -44,20 +47,17 @@ namespace FlowUI
         {
             _example = _exampleStore.Get(example);
             OnPropertyChanged(nameof(Name));
-            OnPropertyChanged(nameof(Code));
-            NotifyCodeChanged?.Invoke();
+            Line.LineEdited(_example.Lines.FirstOrDefault() ?? new([]));
         }
 
         private void OnSelectedExampleCompiled(ExampleUIFormat example)
         {
             _exampleStore.Update(example.Id, example);
-            if(_example.Id == example.Id)
+            _example = example;
+            Line.LineEdited(_example.Lines.FirstOrDefault() ?? new([]));
+            if (_example.Id == example.Id)
             {
                 _example = example;
-                OnPropertyChanged(nameof(Code));
-                OnPropertyChanged(nameof(Errors));
-                OnPropertyChanged(nameof(ErrorVisible));
-                NotifyCodeChanged?.Invoke();
             }
         }
 
@@ -67,14 +67,7 @@ namespace FlowUI
             set => RenameExample(value);
         }
 
-        public string Code
-        {
-            get => DeserializeCode();
-            set => OnCodeChanged(value);
-        }
 
-        public IEnumerable<Token> Tokens => 
-            _example.Lines.FirstOrDefault()?.Tokens ?? [];
 
         private void OnCodeChanged(string value)
         {
@@ -89,13 +82,6 @@ namespace FlowUI
                 _ => ""
             };
 
-        private string DeserializeCode() =>
-            _example.Lines.Any() ?
-            _example.Lines.
-            Select(
-                l => l.Tokens.Select(t => t.Value).Aggregate((a,b) => $"{a} {b}")).
-            Aggregate((a,b) => $"{a}{Environment.NewLine}{b}") :
-            "";
 
 
         private void RenameExample(string value)
@@ -109,16 +95,5 @@ namespace FlowUI
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
-        public IEnumerable<string> Errors => 
-            _example.
-            Lines.
-            FirstOrDefault()?.
-            Tokens?.OfType<ErrorToken>().
-            Select(e => e.Error)
-            ?? [];
-
-        public Visibility ErrorVisible => 
-            Errors.Any() ? Visibility.Visible : Visibility.Collapsed;
     }
 }

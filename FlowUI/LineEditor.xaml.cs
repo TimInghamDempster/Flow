@@ -18,11 +18,11 @@ namespace FlowUI
 
         protected void OnLoaded(object sender, RoutedEventArgs e)
         {
-            (DataContext as CodeEditorViewModel)!.NotifyCodeChanged += () =>
+            (DataContext as LineEditorViewModel)!.NotifyCodeChanged += () =>
             {
                 _textDisplay.Inlines.Clear();
 
-                foreach (var token in (DataContext as CodeEditorViewModel)!.Tokens)
+                foreach (var token in (DataContext as LineEditorViewModel)!.Tokens)
                 {
                     _textDisplay.Inlines.Add(token is ErrorToken error ?
                     new Underline(
