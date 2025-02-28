@@ -67,8 +67,6 @@ namespace FlowUI
             set => RenameExample(value);
         }
 
-
-
         private void OnCodeChanged(string value)
         {
             _messageQueue.Send(new ExampleCodeModifiedInUI(_example.Id, value));

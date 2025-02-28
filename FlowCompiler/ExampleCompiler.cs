@@ -276,7 +276,7 @@ namespace FlowCompiler
 
         public static ParsedLine CompileExpression(string expression)
         {
-            List<Token> tokens = Tokenize(expression, "val");
+            List<Token> tokens = Tokenize(expression, "let");
 
             if (tokens.LastOrDefault() is not (NumberToken or ClosePeren or Name or StringLiteral))
             {
