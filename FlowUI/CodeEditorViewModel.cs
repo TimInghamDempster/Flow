@@ -1,6 +1,6 @@
 ﻿using FlowCompiler;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Windows;
 using System.Windows.Media;
 using Utils;
 
@@ -17,19 +17,20 @@ namespace FlowUI
 
         private readonly Store<ExampleUIFormat> _exampleStore = new();
 
-        public LineEditorViewModel Line { get; } = new(new([]));
+        public ObservableCollection<LineEditorViewModel> Lines { get; } = [];
 
         public CodeEditorViewModel(MessageQueue messageQueue)
         {
             _messageQueue = messageQueue;
 
-            Line.OnCodeChanged += s => OnCodeChanged(s);
+            var firstLine = new LineEditorViewModel(new([]));
+            firstLine.OnCodeChanged += OnCodeChanged;
+            Lines.Add(firstLine);
 
             _messageQueue.Register<SelectedExampleChanged>(m => OnSelectedExampleChanged(m.Example));
             _messageQueue.Register<ExampleCompiledForUI>(m => OnSelectedExampleCompiled(m.Example));
             _messageQueue.Register<ExampleRenamedInUI>(m => OnExampleRenamed(m.Example, m.NewName));
         }
-
 
         private void OnExampleRenamed(Guid example, string newName)
         {
@@ -47,18 +48,36 @@ namespace FlowUI
         {
             _example = _exampleStore.Get(example);
             OnPropertyChanged(nameof(Name));
-            Line.LineEdited(_example.Lines.FirstOrDefault() ?? new([]));
+            UpdateCodeView();
+        }
+
+        private void UpdateCodeView()
+        {
+            while (_example.Lines.Count > Lines.Count)
+            {
+                var newLine = new LineEditorViewModel(new([]));
+                newLine.OnCodeChanged += OnCodeChanged;
+                Lines.Add(newLine);
+            }
+            while (_example.Lines.Count < Lines.Count)
+            {
+                Lines.RemoveAt(Lines.Count - 1);
+            }
+            for (var i = 0; i < _example.Lines.Count; i++)
+            {
+                Lines[i].LineEdited(_example.Lines[i]);
+            }
         }
 
         private void OnSelectedExampleCompiled(ExampleUIFormat example)
         {
             _exampleStore.Update(example.Id, example);
             _example = example;
-            Line.LineEdited(_example.Lines.FirstOrDefault() ?? new([]));
             if (_example.Id == example.Id)
             {
                 _example = example;
             }
+            UpdateCodeView();
         }
 
         public string Name
@@ -67,9 +86,10 @@ namespace FlowUI
             set => RenameExample(value);
         }
 
-        private void OnCodeChanged(string value)
+        private void OnCodeChanged()
         {
-            _messageQueue.Send(new ExampleCodeModifiedInUI(_example.Id, value));
+            var codeBlock = string.Join(Environment.NewLine, Lines.Select(l => l.CodeRaw));
+            _messageQueue.Send(new ExampleCodeModifiedInUI(_example.Id, codeBlock));
         }
 
         private string GetDeclaration(Either<Declaration, ErrorLine> declaration) =>

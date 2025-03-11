@@ -10,6 +10,12 @@
     <DockPanel>
         <Label DockPanel.Dock="Top">Code</Label>
         <TextBox DockPanel.Dock="Top" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
-        <local:LineEditor DataContext="{Binding Line}"/>
+        <ListView ItemsSource="{Binding Lines}" DockPanel.Dock="Bottom">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <local:LineEditor DataContext="{Binding}"/>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
     </DockPanel>
 </UserControl>

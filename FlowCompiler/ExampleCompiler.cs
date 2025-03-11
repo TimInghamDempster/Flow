@@ -17,6 +17,7 @@ namespace FlowCompiler
     public record EndFunc() : ILInstruction;
     public record ILCode(IReadOnlyList<ILInstruction> IL);
     public record ParsedLine(IReadOnlyList<Token> Tokens);
+    public record EmptyLine() : ParsedLine(new List<Token>());
     public record StatementLine(IReadOnlyList<Token> Tokens) : ParsedLine(Tokens)
     {
         public override string ToString()
@@ -57,14 +58,18 @@ namespace FlowCompiler
 
     public class ExampleCompiler
     {
-        public static (Example, ExampleUIFormat) Compile(Guid id, string name, string code)
+        internal static (Example, ExampleUIFormat) Compile(Guid id, string name, string code)
         {
-            var lines = 
-                code.Split('\n').
-                Select(l => new Line(l, CompileLine(l))).
-                ToList();
+            var lines =
+                code.Split(Environment.NewLine).
+                Select(l => new Line(l, CompileLine(l))).ToList();
 
-            return LinesToExample(id, name, lines);
+            if(lines.Last().ParsedLine is not EmptyLine)
+            {
+                //lines = lines.Append(new Line("", new EmptyLine()));
+            }    
+
+            return LinesToExample(id, name, lines.ToList());
         }
 
 
@@ -119,7 +124,7 @@ namespace FlowCompiler
                     {
                         var tokens = line.ParsedLine.Tokens.ToList();
                         tokens.Add(new ErrorToken(
-                            0, 0, line.Source, "Declaration expected"));
+                            0, 0, "", "Declaration expected"));
                         tokenLines.Add(new(tokens));
                     }
                 }
@@ -156,7 +161,7 @@ namespace FlowCompiler
 
         public static ParsedLine CompileLine(string line)
         {
-            line = line.Trim(' ');
+            line = line.Trim(' ').Replace(Environment.NewLine, "");
             return line switch
             {
                 var s when s.StartsWith("set") => CompileDeclaration(s),

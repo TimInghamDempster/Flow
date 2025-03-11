@@ -40,11 +40,11 @@ namespace FlowUI
 
         public ICommand SaveProgram { get; }
 
-        private record ProgramDTO(Program Program, IReadOnlyList<Example> Examples);
+        //private record ProgramDTO(Program Program, IReadOnlyList<Example> Examples);
 
         private void OnSaveProgram()
         {
-            var dialog = new SaveFileDialog();
+            /*var dialog = new SaveFileDialog();
             dialog.Filter = "Flow Program (*.flow)|*.flow";
             dialog.DefaultExt = ".flow";
             dialog.AddExtension = true;
@@ -56,7 +56,7 @@ namespace FlowUI
                 var data = new ProgramDTO(_program, ExampleBrowserViewModel.Examples.ToList());
 
                 File.WriteAllText(filePath, JsonSerializer.Serialize(data));
-            }
+            }*/
         }
 
         public ICommand OpenProgram { get; }

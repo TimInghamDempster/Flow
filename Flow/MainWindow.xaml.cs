@@ -17,10 +17,9 @@ namespace Flow
             var messageQueue = new MessageQueue();
 
             var initialProgram = new Program(new List<Guid>() {});
-            var exampleStore = new Store<Example>();
 
-            var compiler = new Compiler(messageQueue, initialProgram, exampleStore);
-            var exampleBrowser = new ExampleBrowserViewModel(exampleStore, messageQueue, initialProgram);
+            var compiler = new Compiler(messageQueue, initialProgram);
+            var exampleBrowser = new ExampleBrowserViewModel(messageQueue, initialProgram);
             var codeEditor = new CodeEditorViewModel(messageQueue);
 
             DataContext = new RootControlViewModel(exampleBrowser, codeEditor, initialProgram, messageQueue);

@@ -16,8 +16,14 @@ namespace FlowUI
         public string Code
         {
             get => DeserializeCode();
-            set => OnCodeChanged?.Invoke(value);
+            set
+            {
+                CodeRaw = value;
+                OnCodeChanged?.Invoke();
+            }
         }
+
+        public string CodeRaw { get; private set; } = "";
 
         private string DeserializeCode() =>
             _line.Tokens.Any() ?
@@ -29,7 +35,7 @@ namespace FlowUI
         public void LineEdited(LineUIFormat line)
         {
             _line = line;
-            OnPropertyChanged(nameof(Code));
+            CodeRaw = DeserializeCode();
             OnPropertyChanged(nameof(Errors));
             OnPropertyChanged(nameof(ErrorVisible));
             NotifyCodeChanged?.Invoke();
@@ -44,7 +50,7 @@ namespace FlowUI
         public Visibility ErrorVisible =>
             Errors.Any() ? Visibility.Visible : Visibility.Collapsed;
 
-        public event Action<string>? OnCodeChanged;
+        public event Action? OnCodeChanged;
         public event Action? NotifyCodeChanged;
         public event PropertyChangedEventHandler? PropertyChanged;
 

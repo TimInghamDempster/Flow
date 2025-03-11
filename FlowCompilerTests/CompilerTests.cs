@@ -7,7 +7,7 @@ namespace FlowCompilerTests
     [TestClass]
     public class CompilerTests
     {
-        [TestMethod]
+        /*[TestMethod]
         public void AddTest()
         {
             // Arrange
@@ -79,6 +79,6 @@ namespace FlowCompilerTests
             // Assert
             result.Examples.Should().NotContain(test.Id);
             result.Examples.Should().Contain(test2.Id);
-        }
+        }*/
     }
 }

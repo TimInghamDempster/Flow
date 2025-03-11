@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using FlowCompiler;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
 using Utils;
@@ -12,18 +13,14 @@ namespace FlowUI
     {
         private readonly MessageQueue _messageQueue;
         private Program _program;
-        private readonly Store<Example> _exampleStore;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public ExampleBrowserViewModel(
-            Store<Example> examples,
             MessageQueue messageQueue,
             Program program)
         {
             _messageQueue = messageQueue;
-
-            _exampleStore = examples;
 
             AddExample = new RelayCommand(OnAddExample);
             _program = program;
@@ -33,7 +30,7 @@ namespace FlowUI
 
         private void OnProgramUpdated(Program program)
         {
-            _program = program;
+            /*_program = program;
             
             _exampleList = 
                 program.
@@ -41,29 +38,28 @@ namespace FlowUI
                 Select(id => _exampleStore.Get(id)).
                 ToList();
 
-            OnPropertyChanged(nameof(Examples));
+            OnPropertyChanged(nameof(Examples));*/
         }
 
         private void OnAddExample()
         {
-            var newExample = new Example(
+            var newExample = new ExampleUIFormat(
                 Guid.NewGuid(),
                 $"Example {Examples.Count()}",
-                Array.Empty<Declaration>(),
-                new Expression(new(0, 0, "statement"), []),
-                Array.Empty<Declaration>(),
-                new([], [], []));
+                [new([new Space(0,1)])]);
+
+            _exampleList.Add(newExample);
 
             _messageQueue.Send(new UserAddedExample(newExample));
         }
 
-        private List<Example> _exampleList = [];
-        public IEnumerable<Example> Examples => _exampleList;
+        private ObservableCollection<ExampleUIFormat> _exampleList = [];
+        public IEnumerable<ExampleUIFormat> Examples => _exampleList;
 
         public ICommand AddExample { get; }
 
-        private Example? _selectedExample;
-        public Example? SelectedExample 
+        private ExampleUIFormat? _selectedExample;
+        public ExampleUIFormat? SelectedExample 
         {
             get => _selectedExample;
             set

@@ -7,7 +7,7 @@ namespace FlowCompiler
     {
         public Debugger(MessageQueue messageQueue)
         {
-            messageQueue.Register<ExampleModified>(m => TestExample(m.Example));
+            //messageQueue.Register<ExampleModified>(m => TestExample(m.Example));
         }
 
         [DllImport("..\\..\\..\\..\\Flow\\bin\\Debug\\net8.0-windows\\Runtime", CharSet = CharSet.Unicode, SetLastError = true)]
