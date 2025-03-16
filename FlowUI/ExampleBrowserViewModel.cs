@@ -24,6 +24,17 @@ namespace FlowUI
             AddExample = new RelayCommand(OnAddExample);
 
             _messageQueue.Register<LoadedExamplesAddedToCodeEditor>(m => OnProgramLoaded(m.Examples));
+            _messageQueue.Register<ExampleRenamedInUI>(OnExampleRenamedInUI);
+        }
+
+        private void OnExampleRenamedInUI(ExampleRenamedInUI uI)
+        {
+            var example = _exampleList.FirstOrDefault(e => e.Id == uI.Example);
+            if (example is null) return;
+
+            var exampleIndex = _exampleList.IndexOf(example);
+            _exampleList[exampleIndex] = example with { Name = uI.NewName };
+            OnPropertyChanged(nameof(Examples));
         }
 
         private void OnProgramLoaded(IReadOnlyList<ExampleUIFormat> examples)
