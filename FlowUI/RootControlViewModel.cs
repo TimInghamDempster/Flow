@@ -13,6 +13,8 @@ namespace FlowUI
         private Program _program;
         private readonly MessageQueue _messageQueue;
 
+        private Dictionary<Guid, ExampleUIFormat> _examples = new();
+
         public RootControlViewModel(
             ExampleBrowserViewModel exampleBrowserViewModel, 
             CodeEditorViewModel codeEditorViewModel,
@@ -25,9 +27,15 @@ namespace FlowUI
             _program = initialProgram;
 
             messageQueue.Register<ProgramUpdated>(m => OnProgramUpdated(m.Program));
+            messageQueue.Register<ExampleCompiledForUI>(OnExampleCompiledForUI);
 
             SaveProgram = new RelayCommand(OnSaveProgram);
             OpenProgram = new RelayCommand(OnOpenProgram);
+        }
+
+        private void OnExampleCompiledForUI(ExampleCompiledForUI message)
+        {
+            _examples[message.Example.Id] = message.Example;
         }
 
         private void OnProgramUpdated(Program program)
@@ -40,11 +48,10 @@ namespace FlowUI
 
         public ICommand SaveProgram { get; }
 
-        //private record ProgramDTO(Program Program, IReadOnlyList<Example> Examples);
 
         private void OnSaveProgram()
         {
-            /*var dialog = new SaveFileDialog();
+            var dialog = new SaveFileDialog();
             dialog.Filter = "Flow Program (*.flow)|*.flow";
             dialog.DefaultExt = ".flow";
             dialog.AddExtension = true;
@@ -53,10 +60,10 @@ namespace FlowUI
             {
                 var filePath = dialog.FileName;
 
-                var data = new ProgramDTO(_program, ExampleBrowserViewModel.Examples.ToList());
+                var dto = new ProgramDTO(_program, _examples.Values.ToList());
 
-                File.WriteAllText(filePath, JsonSerializer.Serialize(data));
-            }*/
+                File.WriteAllText(filePath, JsonSerializer.Serialize(dto));
+            }
         }
 
         public ICommand OpenProgram { get; }
@@ -72,10 +79,14 @@ namespace FlowUI
             {
                 var filePath = dialog.FileName;
 
-                var program = JsonSerializer.Deserialize<Program>(File.ReadAllText(filePath));
+                var programDto = JsonSerializer.Deserialize<ProgramDTO>(File.ReadAllText(filePath));
 
-                if(program is not null)
-                    _messageQueue.Send(new ProgramUpdated(program));
+                if(programDto is null)
+                    return;
+
+                _program = programDto.Program;
+
+                _messageQueue.Send(new ProgramLoaded(programDto));
             }
         }
     }

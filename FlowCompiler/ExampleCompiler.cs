@@ -7,6 +7,16 @@ namespace FlowCompiler
         string Name,
         IReadOnlyList<LineUIFormat> Lines);
 
+    public static class EaxmpleUIFormatExtensions
+    {
+        public static string ToRawCode(this ExampleUIFormat example)
+        {
+            return string.Join(
+                Environment.NewLine, example.Lines.
+                Select(l => string.Join(' ', l.Tokens.Select(t => t.Value))));
+        }
+    }
+
     public record CodeBlock(IReadOnlyList<Line> Lines);
     public record Line(string Source, ParsedLine ParsedLine);
     public record Message(IReadOnlyList<Line> Lines) : CodeBlock(Lines);

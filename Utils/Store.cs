@@ -18,5 +18,10 @@
         {
             _items[id] = item;
         }
+
+        public void Clear()
+        {
+            _items.Clear();
+        }
     }
 }

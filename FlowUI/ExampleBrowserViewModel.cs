@@ -12,7 +12,6 @@ namespace FlowUI
     public class ExampleBrowserViewModel : INotifyPropertyChanged
     {
         private readonly MessageQueue _messageQueue;
-        private Program _program;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -23,9 +22,20 @@ namespace FlowUI
             _messageQueue = messageQueue;
 
             AddExample = new RelayCommand(OnAddExample);
-            _program = program;
 
             _messageQueue.Register<ProgramUpdated>(m => OnProgramUpdated(m.Program));
+            _messageQueue.Register<LoadedExamplesAddedToCodeEditor>(m => OnProgramLoaded(m.Examples));
+        }
+
+        private void OnProgramLoaded(IReadOnlyList<ExampleUIFormat> examples)
+        {
+            _exampleList.Clear();
+            foreach (var example in examples)
+            {
+                _exampleList.Add(example);
+            }
+            SelectedExample = _exampleList.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedExample));
         }
 
         private void OnProgramUpdated(Program program)

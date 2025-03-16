@@ -17,6 +17,10 @@ namespace FlowCompiler
     public record ExampleRenamedInUI(Guid Example, string NewName) : IMessage;
     public record ExampleCodeModifiedInUI(Guid Example, string Code) : IMessage;
     public record ExampleCompiledForUI(ExampleUIFormat Example) : IMessage;
+    public record ProgramLoaded(ProgramDTO Program) : IMessage;
+    public record LoadedExamplesCompiled(IReadOnlyList<ExampleUIFormat> Examples) : IMessage;
+
+    public record ProgramDTO(Program Program, IReadOnlyList<ExampleUIFormat> Examples);
 
     public class Compiler
     {
@@ -29,15 +33,30 @@ namespace FlowCompiler
             _messageQueue = messageQueue;
             _program = initialProgram;
             _examples = new();
-            
+
+            _messageQueue.Register<ProgramLoaded>(m =>
+            {
+                _program = m.Program.Program;
+                _examples.Clear();
+
+                var uiExamples = new List<ExampleUIFormat>();
+
+                foreach (var example in m.Program.Examples)
+                {
+                    var compiledExample = CompileExample(example.Id, example.Name, example.ToRawCode());
+                    _examples.Add(example.Id, compiledExample.Item1);
+                    uiExamples.Add(compiledExample.Item2);
+                }
+
+                _messageQueue.Send(new LoadedExamplesCompiled(uiExamples));
+            });
+
             _messageQueue.Register<UserAddedExample>(m =>
             {
                 var example = CompileExample(
                     m.Example.Id,
                     m.Example.Name,
-                    string.Join(Environment.NewLine,
-                        m.Example.Lines.Select(l => string.Join("",
-                            l.Tokens.Select(t => t.Value)))));
+                    m.Example.ToRawCode());
 
                 _examples.Add(m.Example.Id, example.Item1);
                 var newProgram = AddExample(_program, example.Item1);

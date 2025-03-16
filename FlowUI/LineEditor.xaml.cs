@@ -20,29 +20,41 @@ namespace FlowUI
         {
             (DataContext as LineEditorViewModel)!.NotifyCodeChanged += () =>
             {
-                _textDisplay.Inlines.Clear();
-
-                foreach (var token in (DataContext as LineEditorViewModel)!.Tokens)
-                {
-                    _textDisplay.Inlines.Add(token is ErrorToken error ?
-                    new Underline(
-                        new Run(token.Value) {
-                            Foreground = Brushes.Black,
-                            ToolTip = new Label() { Content = error.Value } })
-                    { Foreground = Brushes.Red } :
-                    new Run
-                    {
-                        Foreground = token switch
-                        {
-                            Keyword => Brushes.Blue,
-                            FlowCompiler.Name => Brushes.Green,
-                            _ => Brushes.Black
-                        },
-                        Text = token.Value
-                    });
-                    _textDisplay.Inlines.Add(" ");
-                }
+                UpdateText();
             };
+            UpdateText();
+        }
+
+        private void UpdateText()
+        {
+            _textDisplay.Inlines.Clear();
+
+            if (DataContext is not LineEditorViewModel vm || vm is null)
+            {
+                return;
+            }
+            foreach (var token in vm.Tokens)
+            {
+                _textDisplay.Inlines.Add(token is ErrorToken error ?
+                new Underline(
+                    new Run(token.Value)
+                    {
+                        Foreground = Brushes.Black,
+                        ToolTip = new Label() { Content = error.Value }
+                    })
+                { Foreground = Brushes.Red } :
+                new Run
+                {
+                    Foreground = token switch
+                    {
+                        Keyword => Brushes.Blue,
+                        FlowCompiler.Name => Brushes.Green,
+                        _ => Brushes.Black
+                    },
+                    Text = token.Value
+                });
+                _textDisplay.Inlines.Add(" ");
+            }
         }
     }
 }

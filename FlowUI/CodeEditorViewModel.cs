@@ -10,6 +10,8 @@ namespace FlowUI
         Brush Foreground,
         string Text);
 
+    internal record LoadedExamplesAddedToCodeEditor(IReadOnlyList<ExampleUIFormat> Examples) : IMessage;
+
     public class CodeEditorViewModel : INotifyPropertyChanged
     {
         private ExampleUIFormat _example = new(new(), "", []);
@@ -30,6 +32,17 @@ namespace FlowUI
             _messageQueue.Register<SelectedExampleChanged>(m => OnSelectedExampleChanged(m.Example));
             _messageQueue.Register<ExampleCompiledForUI>(m => OnSelectedExampleCompiled(m.Example));
             _messageQueue.Register<ExampleRenamedInUI>(m => OnExampleRenamed(m.Example, m.NewName));
+            _messageQueue.Register<LoadedExamplesCompiled>(m => OnProgramLoaded(m.Examples));
+        }
+
+        private void OnProgramLoaded(IReadOnlyList<ExampleUIFormat> examples)
+        {
+            _exampleStore.Clear();
+            foreach (var example in examples)
+            {
+                _exampleStore.Add(example.Id, example);
+            }
+            _messageQueue.Send(new LoadedExamplesAddedToCodeEditor(examples));
         }
 
         private void OnExampleRenamed(Guid example, string newName)
@@ -55,7 +68,7 @@ namespace FlowUI
         {
             while (_example.Lines.Count > Lines.Count)
             {
-                var newLine = new LineEditorViewModel(new([]));
+                var newLine = new LineEditorViewModel(_example.Lines[Lines.Count]);
                 newLine.OnCodeChanged += OnCodeChanged;
                 Lines.Add(newLine);
             }
