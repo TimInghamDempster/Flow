@@ -23,7 +23,6 @@ namespace FlowUI
 
             AddExample = new RelayCommand(OnAddExample);
 
-            _messageQueue.Register<ProgramUpdated>(m => OnProgramUpdated(m.Program));
             _messageQueue.Register<LoadedExamplesAddedToCodeEditor>(m => OnProgramLoaded(m.Examples));
         }
 
@@ -38,19 +37,6 @@ namespace FlowUI
             OnPropertyChanged(nameof(SelectedExample));
         }
 
-        private void OnProgramUpdated(Program program)
-        {
-            /*_program = program;
-            
-            _exampleList = 
-                program.
-                Examples.
-                Select(id => _exampleStore.Get(id)).
-                ToList();
-
-            OnPropertyChanged(nameof(Examples));*/
-        }
-
         private void OnAddExample()
         {
             var newExample = new ExampleUIFormat(
@@ -61,6 +47,8 @@ namespace FlowUI
             _exampleList.Add(newExample);
 
             _messageQueue.Send(new UserAddedExample(newExample));
+            SelectedExample = newExample;
+            OnPropertyChanged(nameof(SelectedExample));
         }
 
         private ObservableCollection<ExampleUIFormat> _exampleList = [];
