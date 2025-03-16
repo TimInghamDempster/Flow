@@ -28,9 +28,15 @@ namespace FlowUI
 
             messageQueue.Register<ProgramUpdated>(m => OnProgramUpdated(m.Program));
             messageQueue.Register<ExampleCompiledForUI>(OnExampleCompiledForUI);
+            messageQueue.Register<LoadedExamplesCompiled>(OnLoadedExamplesCompiled);
 
             SaveProgram = new RelayCommand(OnSaveProgram);
             OpenProgram = new RelayCommand(OnOpenProgram);
+        }
+
+        private void OnLoadedExamplesCompiled(LoadedExamplesCompiled compiled)
+        {
+            _examples = compiled.Examples.ToDictionary(e => e.Id);
         }
 
         private void OnExampleCompiledForUI(ExampleCompiledForUI message)
