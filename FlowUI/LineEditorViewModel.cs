@@ -11,6 +11,7 @@ namespace FlowUI
         public LineEditorViewModel(LineUIFormat line)
         {
             _line = line;
+            CodeRaw = DeserializeCode();
         }
 
         public string Code
@@ -36,6 +37,8 @@ namespace FlowUI
         {
             _line = line;
             CodeRaw = DeserializeCode();
+            OnPropertyChanged(nameof(CodeRaw));
+            OnPropertyChanged(nameof(Code));
             OnPropertyChanged(nameof(Errors));
             OnPropertyChanged(nameof(ErrorVisible));
             NotifyCodeChanged?.Invoke();
