@@ -14,7 +14,10 @@
                  SelectedItem="{Binding SelectedExample}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <Label Content="{Binding Name}"/>
+                    <DockPanel>
+                        <Label DockPanel.Dock="Right" Content="{Binding Status}"/>
+                        <Label DockPanel.Dock="Left" Content="{Binding Name}"/>
+                    </DockPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

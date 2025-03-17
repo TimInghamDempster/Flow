@@ -19,6 +19,7 @@ namespace FlowCompiler
     public record ExampleCompiledForUI(ExampleUIFormat Example) : IMessage;
     public record ProgramLoaded(ProgramDTO Program) : IMessage;
     public record LoadedExamplesCompiled(IReadOnlyList<ExampleUIFormat> Examples) : IMessage;
+    public record ExampleRunSuccessfully(Guid Example) : IMessage;
 
     public record ProgramDTO(Program Program, IReadOnlyList<ExampleUIFormat> Examples);
 
@@ -49,6 +50,10 @@ namespace FlowCompiler
                 }
 
                 _messageQueue.Send(new LoadedExamplesCompiled(uiExamples));
+                foreach (var example in uiExamples)
+                {
+                    _messageQueue.Send(new ExampleRunSuccessfully(example.Id));
+                }
             });
 
             _messageQueue.Register<UserAddedExample>(m =>
@@ -78,6 +83,7 @@ namespace FlowCompiler
                 var example = CompileExample(m.Example, _examples.Get(m.Example).Name, m.Code);
                 _examples.Update(example.Item1.Id, example.Item1);
                 _messageQueue.Send(new ExampleCompiledForUI(example.Item2));
+                _messageQueue.Send(new ExampleRunSuccessfully(example.Item1.Id));
             });
         }
 
